@@ -10,15 +10,9 @@ class DeviceState {
   final Device device;
   final ConnectionStatus status;
 
-  const DeviceState({
-    required this.device,
-    required this.status,
-  });
+  const DeviceState({required this.device, required this.status});
 
-  DeviceState copyWith({
-    Device? device,
-    ConnectionStatus? status,
-  }) {
+  DeviceState copyWith({Device? device, ConnectionStatus? status}) {
     return DeviceState(
       device: device ?? this.device,
       status: status ?? this.status,
@@ -28,41 +22,36 @@ class DeviceState {
 
 final deviceRepositoryProvider = Provider((ref) => DeviceRepository());
 
-final devicesProvider = StateNotifierProvider<DevicesNotifier, AsyncValue<List<DeviceState>>>((ref) {
+final devicesProvider =
+    StateNotifierProvider<DevicesNotifier, AsyncValue<List<DeviceState>>>((ref) {
   final repository = ref.watch(deviceRepositoryProvider);
   final toolsConfig = ref.watch(toolsConfigProvider);
-
-  return DevicesNotifier(repository, toolsConfig, ref);
+  return DevicesNotifier(repository, toolsConfig);
 });
 
 class DevicesNotifier extends StateNotifier<AsyncValue<List<DeviceState>>> {
   final DeviceRepository _repository;
   final AsyncValue<dynamic> _toolsConfig;
-  final Ref _ref;
 
   Timer? _pollingTimer;
   AdbService? _adbService;
 
-  DevicesNotifier(
-    this._repository,
-    this._toolsConfig,
-    this._ref,
-  ) : super(const AsyncValue.loading()) {
+  DevicesNotifier(this._repository, this._toolsConfig)
+      : super(const AsyncValue.loading()) {
     _init();
   }
+
+  List<DeviceState> get _currentList =>
+      state.maybeWhen(data: (l) => l, orElse: () => []);
+
+  void _setState(List<DeviceState> list) => state = AsyncValue.data(list);
 
   Future<void> _init() async {
     try {
       await _repository.init();
       await _initAdbService();
-
-      // Load initial devices
       await _loadDevices();
-
-      // Start polling
       startPolling();
-
-      // Handle auto-reconnect
       await _handleAutoReconnect();
     } catch (e) {
       state = AsyncValue.error(e, StackTrace.current);
@@ -70,55 +59,35 @@ class DevicesNotifier extends StateNotifier<AsyncValue<List<DeviceState>>> {
   }
 
   Future<void> _initAdbService() async {
-    final toolsConfig = _toolsConfig.maybeWhen(
-      data: (config) => config,
-      orElse: () => null,
-    );
-
-    if (toolsConfig != null && toolsConfig.adbPath.isNotEmpty) {
-      _adbService = AdbService(adbPath: toolsConfig.adbPath);
+    final config = _toolsConfig.maybeWhen(data: (c) => c, orElse: () => null);
+    if (config != null && config.adbPath.isNotEmpty) {
+      _adbService = AdbService(adbPath: config.adbPath);
       await _adbService!.startServer();
     }
   }
 
   Future<void> _loadDevices() async {
     final devices = _repository.getAll();
-    final states = devices.map((d) => DeviceState(device: d, status: ConnectionStatus.offline)).toList();
+    _setState(devices.map((d) => DeviceState(device: d, status: ConnectionStatus.offline)).toList());
 
-    state = AsyncValue.data(states);
-
-    // Fetch initial status for each device
-    for (int i = 0; i < states.length; i++) {
-      final status = await _getDeviceStatus(states[i].device);
-      final currentList = (state as AsyncValue<List<DeviceState>>).maybeWhen(
-        data: (list) => list,
-        orElse: () => <DeviceState>[],
-      );
-
-      if (currentList.isNotEmpty && i < currentList.length) {
-        final updated = currentList.toList();
-        updated[i] = updated[i].copyWith(status: status);
-        state = AsyncValue.data(updated);
+    for (int i = 0; i < devices.length; i++) {
+      final status = await _getDeviceStatus(devices[i]);
+      final list = [..._currentList];
+      if (i < list.length) {
+        list[i] = list[i].copyWith(status: status);
+        _setState(list);
       }
     }
   }
 
   Future<ConnectionStatus> _getDeviceStatus(Device device) async {
     if (_adbService == null) return ConnectionStatus.offline;
-
     try {
-      final state = await _adbService!.getDeviceState(device.serial ?? '');
-
-      if (state == 'device') {
-        return ConnectionStatus.connected;
-      } else if (state == 'unauthorized') {
-        return ConnectionStatus.error;
-      } else if (state == 'offline') {
-        return ConnectionStatus.offline;
-      }
-
+      final s = await _adbService!.getDeviceState(device.serial ?? '');
+      if (s == 'device') return ConnectionStatus.connected;
+      if (s == 'unauthorized') return ConnectionStatus.error;
       return ConnectionStatus.offline;
-    } catch (e) {
+    } catch (_) {
       return ConnectionStatus.error;
     }
   }
@@ -126,13 +95,7 @@ class DevicesNotifier extends StateNotifier<AsyncValue<List<DeviceState>>> {
   Future<void> addDevice(Device device) async {
     try {
       final newDevice = await _repository.create(device);
-      final currentList = (state as AsyncValue<List<DeviceState>>).maybeWhen(
-        data: (list) => list,
-        orElse: () => <DeviceState>[],
-      );
-
-      final updatedList = [...currentList, DeviceState(device: newDevice, status: ConnectionStatus.offline)];
-      state = AsyncValue.data(updatedList);
+      _setState([..._currentList, DeviceState(device: newDevice, status: ConnectionStatus.offline)]);
     } catch (e) {
       state = AsyncValue.error(e, StackTrace.current);
     }
@@ -141,19 +104,9 @@ class DevicesNotifier extends StateNotifier<AsyncValue<List<DeviceState>>> {
   Future<void> updateDevice(Device device) async {
     try {
       await _repository.update(device);
-      final currentList = (state as AsyncValue<List<DeviceState>>).maybeWhen(
-        data: (list) => list,
-        orElse: () => <DeviceState>[],
-      );
-
-      final updatedList = currentList.map((state) {
-        if (state.device.id == device.id) {
-          return state.copyWith(device: device);
-        }
-        return state;
-      }).toList();
-
-      state = AsyncValue.data(updatedList);
+      _setState(_currentList.map((s) {
+        return s.device.id == device.id ? s.copyWith(device: device) : s;
+      }).toList());
     } catch (e) {
       state = AsyncValue.error(e, StackTrace.current);
     }
@@ -162,13 +115,7 @@ class DevicesNotifier extends StateNotifier<AsyncValue<List<DeviceState>>> {
   Future<void> deleteDevice(String id) async {
     try {
       await _repository.delete(id);
-      final currentList = (state as AsyncValue<List<DeviceState>>).maybeWhen(
-        data: (list) => list,
-        orElse: () => <DeviceState>[],
-      );
-
-      final updatedList = currentList.where((state) => state.device.id != id).toList();
-      state = AsyncValue.data(updatedList);
+      _setState(_currentList.where((s) => s.device.id != id).toList());
     } catch (e) {
       state = AsyncValue.error(e, StackTrace.current);
     }
@@ -176,80 +123,34 @@ class DevicesNotifier extends StateNotifier<AsyncValue<List<DeviceState>>> {
 
   Future<void> connect(Device device) async {
     if (_adbService == null) return;
-
     try {
-      final host = device.host ?? '';
-      final port = device.port ?? 5555;
-
-      final result = await _adbService!.connect(host, port);
-
+      final result = await _adbService!.connect(device.host ?? '', device.port ?? 5555);
       if (result.success) {
-        final updated = device.copyWith(lastConnected: DateTime.now());
-        await updateDevice(updated);
-
-        final currentList = (state as AsyncValue<List<DeviceState>>).maybeWhen(
-          data: (list) => list,
-          orElse: () => <DeviceState>[],
-        );
-
-        final newList = currentList.map((state) {
-          if (state.device.id == device.id) {
-            return state.copyWith(status: ConnectionStatus.connected);
-          }
-          return state;
-        }).toList();
-
-        state = AsyncValue.data(newList);
+        await updateDevice(device.copyWith(lastConnected: DateTime.now()));
+        _setDeviceStatus(device.id, ConnectionStatus.connected);
       } else {
-        final currentList = (state as AsyncValue<List<DeviceState>>).maybeWhen(
-          data: (list) => list,
-          orElse: () => <DeviceState>[],
-        );
-
-        final newList = currentList.map((state) {
-          if (state.device.id == device.id) {
-            return state.copyWith(status: ConnectionStatus.error);
-          }
-          return state;
-        }).toList();
-
-        state = AsyncValue.data(newList);
+        _setDeviceStatus(device.id, ConnectionStatus.error);
       }
-    } catch (e) {
-      // silently fail
-    }
+    } catch (_) {}
   }
 
   Future<void> disconnect(Device device) async {
     if (_adbService == null) return;
-
     try {
-      final serial = device.serial ?? '';
-      await _adbService!.disconnect(serial);
+      await _adbService!.disconnect(device.serial ?? '');
+      _setDeviceStatus(device.id, ConnectionStatus.offline);
+    } catch (_) {}
+  }
 
-      final currentList = (state as AsyncValue<List<DeviceState>>).maybeWhen(
-        data: (list) => list,
-        orElse: () => <DeviceState>[],
-      );
-
-      final newList = currentList.map((state) {
-        if (state.device.id == device.id) {
-          return state.copyWith(status: ConnectionStatus.offline);
-        }
-        return state;
-      }).toList();
-
-      state = AsyncValue.data(newList);
-    } catch (e) {
-      // silently fail
-    }
+  void _setDeviceStatus(String id, ConnectionStatus status) {
+    _setState(_currentList.map((s) {
+      return s.device.id == id ? s.copyWith(status: status) : s;
+    }).toList());
   }
 
   void startPolling() {
     _pollingTimer?.cancel();
-    _pollingTimer = Timer.periodic(const Duration(seconds: 8), (_) {
-      _refreshAllDevices();
-    });
+    _pollingTimer = Timer.periodic(const Duration(seconds: 8), (_) => _refreshAllDevices());
   }
 
   void stopPolling() {
@@ -258,26 +159,18 @@ class DevicesNotifier extends StateNotifier<AsyncValue<List<DeviceState>>> {
   }
 
   Future<void> _refreshAllDevices() async {
-    final currentList = (state as AsyncValue<List<DeviceState>>).maybeWhen(
-      data: (list) => list,
-      orElse: () => <DeviceState>[],
-    );
-
-    for (int i = 0; i < currentList.length; i++) {
-      final status = await _getDeviceStatus(currentList[i].device);
-
-      if (currentList[i].status != status) {
-        final newList = currentList.toList();
-        newList[i] = newList[i].copyWith(status: status);
-        state = AsyncValue.data(newList);
+    final list = [..._currentList];
+    for (int i = 0; i < list.length; i++) {
+      final status = await _getDeviceStatus(list[i].device);
+      if (list[i].status != status) {
+        list[i] = list[i].copyWith(status: status);
+        _setState(list);
       }
     }
   }
 
   Future<void> _handleAutoReconnect() async {
-    final autoReconnectDevices = _repository.getAutoReconnectDevices();
-
-    for (final device in autoReconnectDevices) {
+    for (final device in _repository.getAutoReconnectDevices()) {
       if (device.host != null && device.port != null) {
         await connect(device);
       }

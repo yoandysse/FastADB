@@ -1,5 +1,3 @@
-import 'dart:async';
-import 'package:uuid/uuid.dart';
 import '../models/device.dart';
 import '../models/connection_status.dart';
 import '../../shared/utils/adb_output_parser.dart';

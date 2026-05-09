@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(flutter create *)",
+      "Bash(which flutter *)",
+      "Bash(/Users/yoandysse/fvm/default/bin/flutter create *)",
+      "Bash(/Users/yoandysse/fvm/default/bin/flutter pub *)",
+      "Bash(/Users/yoandysse/fvm/default/bin/dart run *)",
+      "Bash(/Users/yoandysse/fvm/default/bin/flutter analyze *)"
+    ]
+  }
+}

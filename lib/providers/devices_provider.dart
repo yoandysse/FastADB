@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/models/device.dart';
 import '../core/models/connection_status.dart';
@@ -22,21 +23,30 @@ class DeviceState {
 
 final deviceRepositoryProvider = Provider((ref) => DeviceRepository());
 
+/// Provides the list of saved devices and manages their connection state.
+///
+/// Uses [ref.read] for both dependencies so that neither [deviceRepositoryProvider]
+/// nor [toolsConfigProvider] state changes trigger a full notifier disposal +
+/// recreation (which would wipe the device list from the UI on every config load).
+/// [DevicesNotifier] reads config on demand through [Ref] instead.
 final devicesProvider =
     StateNotifierProvider<DevicesNotifier, AsyncValue<List<DeviceState>>>((ref) {
-  final repository = ref.watch(deviceRepositoryProvider);
-  final toolsConfig = ref.watch(toolsConfigProvider);
-  return DevicesNotifier(repository, toolsConfig);
+  // ref.read (not ref.watch) — DeviceRepository is a stable singleton.
+  // Watching it would cause this notifier to be recreated on hot reload,
+  // resetting the device list before Hive finishes loading.
+  final repository = ref.read(deviceRepositoryProvider);
+  return DevicesNotifier(repository, ref);
 });
 
 class DevicesNotifier extends StateNotifier<AsyncValue<List<DeviceState>>> {
   final DeviceRepository _repository;
-  final AsyncValue<dynamic> _toolsConfig;
+  final Ref _ref;
 
   Timer? _pollingTimer;
-  AdbService? _adbService;
+  AdbService? _cachedAdbService;
+  String? _currentAdbPath;
 
-  DevicesNotifier(this._repository, this._toolsConfig)
+  DevicesNotifier(this._repository, this._ref)
       : super(const AsyncValue.loading()) {
     _init();
   }
@@ -46,29 +56,45 @@ class DevicesNotifier extends StateNotifier<AsyncValue<List<DeviceState>>> {
 
   void _setState(List<DeviceState> list) => state = AsyncValue.data(list);
 
+  /// Returns the current ADB path from config, or null if not configured.
+  /// Reads on demand so changes to [toolsConfigProvider] do NOT trigger
+  /// a rebuild of [devicesProvider].
+  AdbService? get _adb {
+    final config = _ref
+        .read(toolsConfigProvider)
+        .maybeWhen(data: (c) => c, orElse: () => null);
+    if (config == null || config.adbPath.isEmpty) return null;
+    if (_currentAdbPath != config.adbPath) {
+      _currentAdbPath = config.adbPath;
+      _cachedAdbService = AdbService(adbPath: config.adbPath);
+    }
+    return _cachedAdbService;
+  }
+
+  /// ADB serial for a device — for WiFi devices it's always host:port.
+  String _effectiveSerial(Device device) {
+    if (device.serial != null && device.serial!.isNotEmpty) return device.serial!;
+    if (device.host != null) return '${device.host}:${device.port ?? 5555}';
+    return '';
+  }
+
   Future<void> _init() async {
     try {
       await _repository.init();
-      await _initAdbService();
       await _loadDevices();
       startPolling();
-      await _handleAutoReconnect();
+      // Try to start the server and auto-reconnect after initial load
+      // so the UI isn't blocked on ADB availability.
+      _adb?.startServer().then((_) => _handleAutoReconnect());
     } catch (e) {
       state = AsyncValue.error(e, StackTrace.current);
     }
   }
 
-  Future<void> _initAdbService() async {
-    final config = _toolsConfig.maybeWhen(data: (c) => c, orElse: () => null);
-    if (config != null && config.adbPath.isNotEmpty) {
-      _adbService = AdbService(adbPath: config.adbPath);
-      await _adbService!.startServer();
-    }
-  }
-
   Future<void> _loadDevices() async {
     final devices = _repository.getAll();
-    _setState(devices.map((d) => DeviceState(device: d, status: ConnectionStatus.offline)).toList());
+    _setState(
+        devices.map((d) => DeviceState(device: d, status: ConnectionStatus.offline)).toList());
 
     for (int i = 0; i < devices.length; i++) {
       final status = await _getDeviceStatus(devices[i]);
@@ -81,9 +107,12 @@ class DevicesNotifier extends StateNotifier<AsyncValue<List<DeviceState>>> {
   }
 
   Future<ConnectionStatus> _getDeviceStatus(Device device) async {
-    if (_adbService == null) return ConnectionStatus.offline;
+    final adb = _adb;
+    if (adb == null) return ConnectionStatus.offline;
+    final serial = _effectiveSerial(device);
+    if (serial.isEmpty) return ConnectionStatus.offline;
     try {
-      final s = await _adbService!.getDeviceState(device.serial ?? '');
+      final s = await adb.getDeviceState(serial);
       if (s == 'device') return ConnectionStatus.connected;
       if (s == 'unauthorized') return ConnectionStatus.error;
       return ConnectionStatus.offline;
@@ -122,11 +151,16 @@ class DevicesNotifier extends StateNotifier<AsyncValue<List<DeviceState>>> {
   }
 
   Future<void> connect(Device device) async {
-    if (_adbService == null) return;
+    final adb = _adb;
+    if (adb == null) return;
     try {
-      final result = await _adbService!.connect(device.host ?? '', device.port ?? 5555);
+      final result = await adb.connect(device.host ?? '', device.port ?? 5555);
       if (result.success) {
-        await updateDevice(device.copyWith(lastConnected: DateTime.now()));
+        final serial = '${device.host}:${device.port ?? 5555}';
+        await updateDevice(device.copyWith(
+          lastConnected: DateTime.now(),
+          serial: serial,
+        ));
         _setDeviceStatus(device.id, ConnectionStatus.connected);
       } else {
         _setDeviceStatus(device.id, ConnectionStatus.error);
@@ -135,10 +169,27 @@ class DevicesNotifier extends StateNotifier<AsyncValue<List<DeviceState>>> {
   }
 
   Future<void> disconnect(Device device) async {
-    if (_adbService == null) return;
+    final adb = _adb;
+    if (adb == null) return;
     try {
-      await _adbService!.disconnect(device.serial ?? '');
+      await adb.disconnect(_effectiveSerial(device));
       _setDeviceStatus(device.id, ConnectionStatus.offline);
+    } catch (_) {}
+  }
+
+  Future<void> launchScrcpy(Device device) async {
+    final config = _ref
+        .read(toolsConfigProvider)
+        .maybeWhen(data: (c) => c, orElse: () => null);
+    if (config == null || config.scrcpyPath.isEmpty) return;
+    final serial = _effectiveSerial(device);
+    if (serial.isEmpty) return;
+    try {
+      await Process.start(
+        config.scrcpyPath,
+        ['-s', serial, '--window-title', device.alias],
+        mode: ProcessStartMode.detached,
+      );
     } catch (_) {}
   }
 
@@ -150,7 +201,8 @@ class DevicesNotifier extends StateNotifier<AsyncValue<List<DeviceState>>> {
 
   void startPolling() {
     _pollingTimer?.cancel();
-    _pollingTimer = Timer.periodic(const Duration(seconds: 8), (_) => _refreshAllDevices());
+    _pollingTimer =
+        Timer.periodic(const Duration(seconds: 8), (_) => _refreshAllDevices());
   }
 
   void stopPolling() {

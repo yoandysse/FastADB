@@ -3,8 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../shared/widgets/app_shell.dart';
 import '../../shared/theme/app_colors.dart';
 import '../../providers/devices_provider.dart';
+import '../../providers/tools_config_provider.dart';
 import '../../core/models/connection_status.dart';
 import '../../core/models/device.dart';
+import '../../l10n/app_localizations.dart';
 import 'widgets/add_device_modal.dart';
 
 class DevicesScreen extends ConsumerWidget {
@@ -19,7 +21,6 @@ class DevicesScreen extends ConsumerWidget {
       currentRoute: 'devices',
       child: Column(
         children: [
-          // Top bar
           _TopBar(
             deviceCount: devicesAsync.maybeWhen(
               data: (list) => list.length,
@@ -27,13 +28,17 @@ class DevicesScreen extends ConsumerWidget {
             ),
             onAdd: () => _showAddModal(context, ref),
           ),
-          Container(height: 1, color: AppColors.divider),
-
-          // Content
+          Builder(builder: (context) {
+            final p = AppPalette.of(context);
+            return Container(height: 1, color: p.divider);
+          }),
           Expanded(
             child: devicesAsync.when(
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (e, _) => Center(child: Text('Error: $e', style: const TextStyle(color: AppColors.textSecondary))),
+              error: (e, _) => Builder(builder: (context) {
+                final p = AppPalette.of(context);
+                return Center(child: Text('Error: $e', style: TextStyle(color: p.textSecondary)));
+              }),
               data: (states) => _DeviceList(
                 states: states,
                 notifier: notifier,
@@ -64,51 +69,37 @@ class _TopBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
+    final p = AppPalette.of(context);
     return Container(
       height: 64,
       padding: const EdgeInsets.symmetric(horizontal: 24),
-      color: AppColors.background,
+      color: p.background,
       child: Row(
         children: [
-          const Text(
-            'Mis Dispositivos',
-            style: TextStyle(
-              color: AppColors.textPrimary,
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-            ),
+          Text(
+            l.devicesTitle,
+            style: TextStyle(color: p.textPrimary, fontSize: 18, fontWeight: FontWeight.w700),
           ),
           const SizedBox(width: 10),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
             decoration: BoxDecoration(
-              color: AppColors.surfaceHighlight,
+              color: p.surfaceHighlight,
               borderRadius: BorderRadius.circular(10),
             ),
             child: Text(
-              '$deviceCount dispositivo${deviceCount != 1 ? 's' : ''}',
-              style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+              l.devicesCount(deviceCount),
+              style: TextStyle(fontSize: 12, color: p.textSecondary),
             ),
           ),
           const Spacer(),
-          OutlinedButton.icon(
-            onPressed: onAdd,
-            icon: const Icon(Icons.add, size: 16),
-            label: const Text('Add device'),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: AppColors.textSecondary,
-              side: const BorderSide(color: AppColors.borderColor),
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-              textStyle: const TextStyle(fontSize: 13),
-            ),
-          ),
-          const SizedBox(width: 8),
           ElevatedButton.icon(
             onPressed: onAdd,
             icon: const Icon(Icons.add, size: 16),
-            label: const Text('Nuevo Dispositivo'),
+            label: Text(l.devicesNewDevice),
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primaryBlue,
+              backgroundColor: p.primaryBlue,
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
               textStyle: const TextStyle(fontSize: 13),
@@ -120,7 +111,7 @@ class _TopBar extends StatelessWidget {
   }
 }
 
-class _DeviceList extends StatelessWidget {
+class _DeviceList extends ConsumerWidget {
   final List<DeviceState> states;
   final DevicesNotifier notifier;
   final VoidCallback onAdd;
@@ -132,9 +123,16 @@ class _DeviceList extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l = AppLocalizations.of(context)!;
     final wifiDevices = states.where((s) => s.device.type == ConnectionType.wifi).toList();
     final usbDevices = states.where((s) => s.device.type == ConnectionType.usb).toList();
+
+    final scrcpyPath = ref.watch(toolsConfigProvider).maybeWhen(
+      data: (c) => c.scrcpyPath,
+      orElse: () => '',
+    );
+    final hasScrcpy = scrcpyPath.isNotEmpty;
 
     if (states.isEmpty) {
       return _EmptyState(onAdd: onAdd);
@@ -146,24 +144,26 @@ class _DeviceList extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (wifiDevices.isNotEmpty) ...[
-            _SectionLabel(label: 'WiFi / TCP-IP', count: wifiDevices.length),
+            _SectionLabel(label: l.devicesSectionWifi, count: wifiDevices.length),
             const SizedBox(height: 10),
             ...wifiDevices.map((s) => _DeviceCard(
               state: s,
               onConnect: () => notifier.connect(s.device),
               onDisconnect: () => notifier.disconnect(s.device),
               onDelete: () => _confirmDelete(context, s.device, notifier),
+              onScrcpy: hasScrcpy ? () => notifier.launchScrcpy(s.device) : null,
             )),
           ],
           if (usbDevices.isNotEmpty) ...[
             const SizedBox(height: 24),
-            _SectionLabel(label: 'USB / TCP-IP', count: usbDevices.length),
+            _SectionLabel(label: l.devicesSectionUsb, count: usbDevices.length),
             const SizedBox(height: 10),
             ...usbDevices.map((s) => _DeviceCard(
               state: s,
               onConnect: () => notifier.connect(s.device),
               onDisconnect: () => notifier.disconnect(s.device),
               onDelete: () => _confirmDelete(context, s.device, notifier),
+              onScrcpy: hasScrcpy ? () => notifier.launchScrcpy(s.device) : null,
             )),
           ],
           const SizedBox(height: 24),
@@ -174,20 +174,22 @@ class _DeviceList extends StatelessWidget {
   }
 
   void _confirmDelete(BuildContext context, Device device, DevicesNotifier notifier) {
+    final l = AppLocalizations.of(context)!;
+    final p = AppPalette.of(context);
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: AppColors.surface,
-        title: const Text('Eliminar dispositivo', style: TextStyle(color: AppColors.textPrimary)),
-        content: Text('¿Eliminar "${device.alias}"?', style: const TextStyle(color: AppColors.textSecondary)),
+        backgroundColor: p.surface,
+        title: Text(l.devicesDeleteTitle, style: TextStyle(color: p.textPrimary)),
+        content: Text(l.devicesDeleteConfirm(device.alias), style: TextStyle(color: p.textSecondary)),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancelar')),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(l.actionCancel)),
           TextButton(
             onPressed: () {
               notifier.deleteDevice(device.id);
               Navigator.pop(ctx);
             },
-            child: const Text('Eliminar', style: TextStyle(color: AppColors.statusError)),
+            child: Text(l.actionDelete, style: TextStyle(color: p.statusError)),
           ),
         ],
       ),
@@ -203,12 +205,13 @@ class _SectionLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final p = AppPalette.of(context);
     return Row(
       children: [
         Text(
           label,
-          style: const TextStyle(
-            color: AppColors.textSecondary,
+          style: TextStyle(
+            color: p.textSecondary,
             fontSize: 12,
             fontWeight: FontWeight.w600,
             letterSpacing: 0.5,
@@ -217,14 +220,8 @@ class _SectionLabel extends StatelessWidget {
         const SizedBox(width: 8),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
-          decoration: BoxDecoration(
-            color: AppColors.surfaceHighlight,
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Text(
-            '$count',
-            style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
-          ),
+          decoration: BoxDecoration(color: p.surfaceHighlight, borderRadius: BorderRadius.circular(8)),
+          child: Text('$count', style: TextStyle(fontSize: 11, color: p.textSecondary)),
         ),
       ],
     );
@@ -236,57 +233,58 @@ class _DeviceCard extends StatelessWidget {
   final VoidCallback onConnect;
   final VoidCallback onDisconnect;
   final VoidCallback onDelete;
+  final VoidCallback? onScrcpy;
 
   const _DeviceCard({
     required this.state,
     required this.onConnect,
     required this.onDisconnect,
     required this.onDelete,
+    this.onScrcpy,
   });
 
-  Color get _statusColor {
-    return switch (state.status) {
-      ConnectionStatus.connected => AppColors.statusConnected,
-      ConnectionStatus.reconnecting => AppColors.statusReconnecting,
-      ConnectionStatus.offline => AppColors.statusOffline,
-      ConnectionStatus.error => AppColors.statusError,
-    };
-  }
+  Color _statusColor(AppPalette p) => switch (state.status) {
+    ConnectionStatus.connected => p.statusConnected,
+    ConnectionStatus.reconnecting => p.statusReconnecting,
+    ConnectionStatus.offline => p.statusOffline,
+    ConnectionStatus.error => p.statusError,
+  };
 
-  String get _statusLabel {
+  String _statusLabel(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
     return switch (state.status) {
-      ConnectionStatus.connected => 'Conectado',
-      ConnectionStatus.reconnecting => 'Reconectando...',
-      ConnectionStatus.offline => 'Sin conexión',
-      ConnectionStatus.error => 'Sin red',
+      ConnectionStatus.connected => l.statusConnected,
+      ConnectionStatus.reconnecting => l.statusReconnecting,
+      ConnectionStatus.offline => l.statusOffline,
+      ConnectionStatus.error => l.statusError,
     };
   }
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
+    final p = AppPalette.of(context);
     final isConnected = state.status == ConnectionStatus.connected;
+    final statusColor = _statusColor(p);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: p.surface,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppColors.borderColor),
+        border: Border.all(color: p.borderColor),
       ),
       child: Row(
         children: [
-          // Left status bar
           Container(
             width: 3,
             height: 72,
             decoration: BoxDecoration(
-              color: _statusColor,
+              color: statusColor,
               borderRadius: const BorderRadius.horizontal(left: Radius.circular(8)),
             ),
           ),
           const SizedBox(width: 16),
-
-          // Device info
           Expanded(
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: 14),
@@ -295,25 +293,11 @@ class _DeviceCard extends StatelessWidget {
                 children: [
                   Row(
                     children: [
-                      Container(
-                        width: 8,
-                        height: 8,
-                        decoration: BoxDecoration(
-                          color: _statusColor,
-                          shape: BoxShape.circle,
-                        ),
-                      ),
+                      Container(width: 8, height: 8, decoration: BoxDecoration(color: statusColor, shape: BoxShape.circle)),
                       const SizedBox(width: 8),
-                      Text(
-                        state.device.alias,
-                        style: const TextStyle(
-                          color: AppColors.textPrimary,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
+                      Text(state.device.alias, style: TextStyle(color: p.textPrimary, fontSize: 14, fontWeight: FontWeight.w600)),
                       const SizedBox(width: 8),
-                      _StatusBadge(label: _statusLabel, color: _statusColor),
+                      _StatusBadge(label: _statusLabel(context), color: statusColor),
                     ],
                   ),
                   const SizedBox(height: 4),
@@ -322,16 +306,13 @@ class _DeviceCard extends StatelessWidget {
                       const SizedBox(width: 16),
                       Text(
                         state.device.serial ?? '${state.device.host}:${state.device.port}',
-                        style: const TextStyle(
-                          color: AppColors.textSecondary,
-                          fontSize: 12,
-                        ),
+                        style: TextStyle(color: p.textSecondary, fontSize: 12),
                       ),
                       if (state.device.lastConnected != null) ...[
-                        const Text(' · ', style: TextStyle(color: AppColors.textDisabled)),
+                        Text(' · ', style: TextStyle(color: p.textDisabled)),
                         Text(
-                          'Hace ${_timeAgo(state.device.lastConnected!)}',
-                          style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                          l.devicesTimeAgo(_timeAgo(state.device.lastConnected!)),
+                          style: TextStyle(color: p.textSecondary, fontSize: 12),
                         ),
                       ],
                     ],
@@ -340,28 +321,22 @@ class _DeviceCard extends StatelessWidget {
               ),
             ),
           ),
-
-          // Actions
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Row(
               children: [
+                if (isConnected && onScrcpy != null) ...[
+                  _ActionButton(label: 'scrcpy', color: p.accent, icon: Icons.cast, onTap: onScrcpy!),
+                  const SizedBox(width: 8),
+                ],
                 if (isConnected)
-                  _ActionButton(
-                    label: 'Desconectar',
-                    color: AppColors.statusError,
-                    onTap: onDisconnect,
-                  )
+                  _ActionButton(label: l.actionDisconnect, color: p.statusError, onTap: onDisconnect)
                 else
-                  _ActionButton(
-                    label: 'Conectar',
-                    color: AppColors.statusConnected,
-                    onTap: onConnect,
-                  ),
+                  _ActionButton(label: l.actionConnect, color: p.statusConnected, onTap: onConnect),
                 const SizedBox(width: 8),
                 GestureDetector(
                   onTap: onDelete,
-                  child: const Icon(Icons.more_horiz, size: 18, color: AppColors.textSecondary),
+                  child: Icon(Icons.more_horiz, size: 18, color: p.textSecondary),
                 ),
               ],
             ),
@@ -394,10 +369,7 @@ class _StatusBadge extends StatelessWidget {
         borderRadius: BorderRadius.circular(4),
         border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
-      child: Text(
-        label,
-        style: TextStyle(fontSize: 11, color: color, fontWeight: FontWeight.w500),
-      ),
+      child: Text(label, style: TextStyle(fontSize: 11, color: color, fontWeight: FontWeight.w500)),
     );
   }
 }
@@ -406,23 +378,27 @@ class _ActionButton extends StatelessWidget {
   final String label;
   final Color color;
   final VoidCallback onTap;
+  final IconData? icon;
 
-  const _ActionButton({required this.label, required this.color, required this.onTap});
+  const _ActionButton({required this.label, required this.color, required this.onTap, this.icon});
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
         decoration: BoxDecoration(
           color: color.withValues(alpha: 0.12),
           borderRadius: BorderRadius.circular(6),
           border: Border.all(color: color.withValues(alpha: 0.4)),
         ),
-        child: Text(
-          label,
-          style: TextStyle(fontSize: 12, color: color, fontWeight: FontWeight.w500),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (icon != null) ...[Icon(icon, size: 13, color: color), const SizedBox(width: 5)],
+            Text(label, style: TextStyle(fontSize: 12, color: color, fontWeight: FontWeight.w500)),
+          ],
         ),
       ),
     );
@@ -434,26 +410,23 @@ class _GlobalShortcuts extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
+    final p = AppPalette.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
-            const Text(
-              'Accesos Rápidos Globales',
-              style: TextStyle(color: AppColors.textSecondary, fontSize: 12, fontWeight: FontWeight.w600),
-            ),
+            Text(l.devicesGlobalShortcuts, style: TextStyle(color: p.textSecondary, fontSize: 12, fontWeight: FontWeight.w600)),
             const Spacer(),
-            GestureDetector(
-              child: const Text('Editar', style: TextStyle(color: AppColors.primaryBlue, fontSize: 12)),
-            ),
+            GestureDetector(child: Text(l.actionEdit, style: TextStyle(color: p.primaryBlue, fontSize: 12))),
           ],
         ),
         const SizedBox(height: 10),
         Wrap(
           spacing: 8,
           runSpacing: 8,
-          children: [
+          children: const [
             _ShortcutChip(label: 'Shell', icon: Icons.terminal),
             _ShortcutChip(label: 'Logcat', icon: Icons.list_alt),
             _ShortcutChip(label: 'File Manager', icon: Icons.folder_outlined),
@@ -473,19 +446,20 @@ class _ShortcutChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final p = AppPalette.of(context);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: p.surface,
         borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: AppColors.borderColor),
+        border: Border.all(color: p.borderColor),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 14, color: AppColors.textSecondary),
+          Icon(icon, size: 14, color: p.textSecondary),
           const SizedBox(width: 6),
-          Text(label, style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+          Text(label, style: TextStyle(fontSize: 12, color: p.textSecondary)),
         ],
       ),
     );
@@ -499,24 +473,23 @@ class _EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
+    final p = AppPalette.of(context);
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.devices, size: 48, color: AppColors.textDisabled),
+          Icon(Icons.devices, size: 48, color: p.textDisabled),
           const SizedBox(height: 16),
-          const Text('Sin dispositivos guardados', style: TextStyle(color: AppColors.textPrimary, fontSize: 16, fontWeight: FontWeight.w600)),
+          Text(l.devicesEmptyTitle, style: TextStyle(color: p.textPrimary, fontSize: 16, fontWeight: FontWeight.w600)),
           const SizedBox(height: 8),
-          const Text('Agrega un dispositivo WiFi para comenzar', style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
+          Text(l.devicesEmptySubtitle, style: TextStyle(color: p.textSecondary, fontSize: 13)),
           const SizedBox(height: 24),
           ElevatedButton.icon(
             onPressed: onAdd,
             icon: const Icon(Icons.add, size: 16),
-            label: const Text('Agregar Dispositivo'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primaryBlue,
-              foregroundColor: Colors.white,
-            ),
+            label: Text(l.devicesAddDevice),
+            style: ElevatedButton.styleFrom(backgroundColor: p.primaryBlue, foregroundColor: Colors.white),
           ),
         ],
       ),

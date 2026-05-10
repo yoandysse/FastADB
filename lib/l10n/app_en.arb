@@ -1,0 +1,138 @@
+{
+  "@@locale": "en",
+
+  "navDevices": "My Devices",
+  "navUsb": "USB Detected",
+  "navShortcuts": "Quick Actions",
+  "navSettings": "Settings",
+
+  "statusConnected": "Connected",
+  "statusReconnecting": "Reconnecting...",
+  "statusOffline": "Offline",
+  "statusError": "No network",
+
+  "actionCancel": "Cancel",
+  "actionSave": "Save",
+  "actionDelete": "Delete",
+  "actionConnect": "Connect",
+  "actionDisconnect": "Disconnect",
+  "actionEdit": "Edit",
+  "actionVerify": "Verify",
+  "actionBrowse": "Browse...",
+
+  "devicesTitle": "My Devices",
+  "devicesCount": "{count, plural, =1{1 device} other{{count} devices}}",
+  "@devicesCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "devicesNewDevice": "New Device",
+  "devicesSectionWifi": "WiFi / TCP-IP",
+  "devicesSectionUsb": "USB / TCP-IP",
+  "devicesEmptyTitle": "No saved devices",
+  "devicesEmptySubtitle": "Add a WiFi device to get started",
+  "devicesAddDevice": "Add Device",
+  "devicesGlobalShortcuts": "Global Quick Actions",
+  "devicesDeleteTitle": "Delete device",
+  "devicesDeleteConfirm": "Delete \"{alias}\"?",
+  "@devicesDeleteConfirm": {
+    "placeholders": {
+      "alias": { "type": "String" }
+    }
+  },
+  "devicesTimeAgo": "{time} ago",
+  "@devicesTimeAgo": {
+    "placeholders": {
+      "time": { "type": "String" }
+    }
+  },
+
+  "usbTitle": "Detected Devices",
+  "usbRefresh": "Updates every 5s",
+  "usbSectionUsb": "USB",
+  "usbSectionWifi": "WiFi / TCP-IP detected",
+  "usbWifiSubtitle": "Active ADB connections from outside the app",
+  "usbUnauthorized": "Unauthorized",
+  "usbActivateWifi": "Enable WiFi ADB",
+  "usbSaveDevice": "Save device",
+  "usbAlreadySaved": "Already saved",
+  "usbEmptyTitle": "No devices detected",
+  "usbEmptySubtitle": "Connect a USB device or enable ADB WiFi",
+  "usbEmptyHint": "Auto-detects every 5 seconds",
+  "usbAdbNotConfigured": "Configure ADB path in Settings first.",
+  "usbActivateWifiTitle": "Enable WiFi ADB",
+  "usbActivateWifiDevice": "Device: {name}",
+  "@usbActivateWifiDevice": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "usbActivateWifiIpLabel": "Device IP address",
+  "usbActivateWifiConfirm": "Connect & Save",
+  "usbSaveWifiTitle": "Save WiFi Device",
+  "usbSaveWifiNameLabel": "Device name",
+
+  "shortcutsTitle": "Quick Actions",
+  "shortcutsEmptyTitle": "No quick actions configured",
+  "shortcutsEmptySubtitle": "Create fast ADB commands for your devices",
+
+  "settingsTitle": "Settings",
+  "settingsToolsSection": "External Tools",
+  "settingsToolsSubtitle": "Configure the paths for ADB and scrcpy installed on your system.",
+  "settingsAdbName": "Android Debug Bridge (ADB)",
+  "settingsAdbSubtitle": "Android debugging tool",
+  "settingsScrcpyName": "scrcpy",
+  "settingsScrcpySubtitle": "Android screen mirror",
+  "settingsWindowsNote": "Windows: visit github.com/Genymobile/scrcpy to install scrcpy. The app does not include scrcpy internally.",
+  "settingsStatusDetected": "● Detected · {version}",
+  "@settingsStatusDetected": {
+    "placeholders": {
+      "version": { "type": "String" }
+    }
+  },
+  "settingsStatusNotConfigured": "● Not configured",
+  "settingsStatusUnverified": "● Unverified",
+  "settingsGeneralSection": "General",
+  "settingsAutoReconnectTitle": "Auto-reconnect on startup",
+  "settingsAutoReconnectSubtitle": "Try to reconnect WiFi devices when the app starts",
+  "settingsStartMinimizedTitle": "Start minimized",
+  "settingsStartMinimizedSubtitle": "App starts in background without a visible window",
+  "settingsAppearanceSection": "Appearance",
+  "settingsThemeSystem": "System",
+  "settingsThemeSystemSub": "Follow OS mode",
+  "settingsThemeDark": "Dark",
+  "settingsThemeDarkSub": "Always dark mode",
+  "settingsThemeLight": "Light",
+  "settingsThemeLightSub": "Always light mode",
+  "settingsLanguageSection": "Language",
+  "settingsLangAuto": "Automatic",
+  "settingsLangAutoSub": "Follow system language",
+  "settingsLangEn": "English",
+  "settingsLangEnSub": "Always in English",
+  "settingsLangEs": "Español",
+  "settingsLangEsSub": "Siempre en español",
+  "aboutVersion": "Version {version}",
+  "@aboutVersion": {
+    "placeholders": {
+      "version": { "type": "String" }
+    }
+  },
+  "aboutDescription": "ADB connection manager for Android — Windows, macOS and Linux",
+
+  "modalAddTitle": "Add Device",
+  "modalEditTitle": "Edit Device",
+  "modalSubtitle": "Configure a new ADB connection",
+  "modalConnectionType": "Connection type",
+  "modalWifiTitle": "WiFi / TCP-IP",
+  "modalWifiSubtitle": "Wireless connection via IP and port",
+  "modalUsbTitle": "USB",
+  "modalUsbSubtitle": "Automatic device detection",
+  "modalAliasLabel": "Device alias",
+  "modalAliasHint": "e.g. Pixel 7 — Office",
+  "modalIpPortLabel": "IP Address and Port",
+  "modalAutoReconnectTitle": "Auto-reconnect",
+  "modalAutoReconnectSubtitle": "Try to reconnect on app start",
+  "modalShortcutsLabel": "Quick actions for this device",
+  "modalSaveDevice": "Save Device"
+}

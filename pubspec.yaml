@@ -10,6 +10,11 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+
+  # Localization
+  intl: ^0.20.2
 
   # State management
   flutter_riverpod: ^2.5.0
@@ -29,6 +34,7 @@ dependencies:
   window_manager: ^0.3.9
   system_tray: ^2.0.3
   shared_preferences: ^2.2.3
+  uuid: ^3.0.7
 
 dev_dependencies:
   flutter_test:
@@ -44,15 +50,16 @@ dev_dependencies:
   # Linting
   flutter_lints: ^6.0.0
 
+  # Flutter app automation via MCP
+  marionette_flutter: ^0.5.0
+
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
 
 # The following section is specific to Flutter packages.
 flutter:
+  generate: true
 
-  # The following line ensures that the Material Icons font is
-  # included with your application, so that you can use the icons in
-  # the material Icons class.
   uses-material-design: true
 
   # To add assets to your application, add an assets section, like this:

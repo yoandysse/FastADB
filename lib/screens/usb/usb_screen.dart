@@ -4,74 +4,122 @@ import '../../shared/widgets/app_shell.dart';
 import '../../shared/theme/app_colors.dart';
 import '../../providers/usb_devices_provider.dart';
 import '../../providers/devices_provider.dart';
+import '../../providers/tools_config_provider.dart';
 import '../../core/models/device.dart';
 import '../../core/models/connection_status.dart';
+import '../../core/services/adb_service.dart';
 
 class UsbScreen extends ConsumerWidget {
   const UsbScreen({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final p = AppPalette.of(context);
     final usbAsync = ref.watch(usbDevicesProvider);
+    final savedDevicesAsync = ref.watch(devicesProvider);
+
+    final savedHostPorts = savedDevicesAsync.maybeWhen(
+      data: (states) => states
+          .map((s) => '${s.device.host}:${s.device.port ?? 5555}')
+          .toSet(),
+      orElse: () => <String>{},
+    );
 
     return AppShell(
       currentRoute: 'usb',
       child: Column(
         children: [
-          // Top bar
           Container(
             height: 64,
             padding: const EdgeInsets.symmetric(horizontal: 24),
-            color: AppColors.background,
+            color: p.background,
             child: Row(
               children: [
-                const Text(
-                  'USB Detectados',
-                  style: TextStyle(color: AppColors.textPrimary, fontSize: 18, fontWeight: FontWeight.w700),
+                Text(
+                  'Dispositivos Detectados',
+                  style: TextStyle(color: p.textPrimary, fontSize: 18, fontWeight: FontWeight.w700),
                 ),
                 const SizedBox(width: 10),
                 usbAsync.maybeWhen(
                   data: (list) => Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                     decoration: BoxDecoration(
-                      color: AppColors.surfaceHighlight,
+                      color: p.surfaceHighlight,
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Text(
                       '${list.length} dispositivo${list.length != 1 ? 's' : ''}',
-                      style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                      style: TextStyle(fontSize: 12, color: p.textSecondary),
                     ),
                   ),
                   orElse: () => const SizedBox.shrink(),
                 ),
                 const Spacer(),
-                // Polling indicator
                 usbAsync.isLoading
-                    ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 1.5))
-                    : const Icon(Icons.refresh, size: 16, color: AppColors.textSecondary),
+                    ? const SizedBox(
+                        width: 14,
+                        height: 14,
+                        child: CircularProgressIndicator(strokeWidth: 1.5))
+                    : Icon(Icons.refresh, size: 16, color: p.textSecondary),
                 const SizedBox(width: 6),
-                const Text('Actualiza cada 5s', style: TextStyle(color: AppColors.textSecondary, fontSize: 11)),
+                Text('Actualiza cada 5s', style: TextStyle(color: p.textSecondary, fontSize: 11)),
               ],
             ),
           ),
-          Container(height: 1, color: AppColors.divider),
+          Container(height: 1, color: p.divider),
 
           Expanded(
             child: usbAsync.when(
               loading: () => const Center(child: CircularProgressIndicator()),
               error: (e, _) => Center(
-                child: Text('Error: $e', style: const TextStyle(color: AppColors.textSecondary)),
-              ),
+                  child: Text('Error: $e', style: TextStyle(color: p.textSecondary))),
               data: (devices) {
-                if (devices.isEmpty) {
-                  return const _EmptyUsb();
+                final usbDevices = devices
+                    .where((d) => !AdbService.isTcpIpSerial(d.serial))
+                    .toList();
+                final tcpDevices = devices
+                    .where((d) => AdbService.isTcpIpSerial(d.serial))
+                    .toList();
+
+                if (usbDevices.isEmpty && tcpDevices.isEmpty) {
+                  return const _EmptyState();
                 }
-                return ListView.builder(
+
+                return SingleChildScrollView(
                   padding: const EdgeInsets.all(24),
-                  itemCount: devices.length,
-                  itemBuilder: (context, i) => _UsbDeviceCard(
-                    device: devices[i],
-                    onActivateWifi: () => _showActivateWifiFlow(context, ref, devices[i]),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (usbDevices.isNotEmpty) ...[
+                        _SectionLabel(label: 'USB', icon: Icons.usb, count: usbDevices.length),
+                        const SizedBox(height: 10),
+                        ...usbDevices.map((d) => _UsbDeviceCard(
+                              device: d,
+                              onActivateWifi: () => _showActivateWifiFlow(context, ref, d),
+                            )),
+                      ],
+
+                      if (tcpDevices.isNotEmpty) ...[
+                        if (usbDevices.isNotEmpty) const SizedBox(height: 24),
+                        _SectionLabel(label: 'WiFi / TCP-IP detectados', icon: Icons.wifi, count: tcpDevices.length),
+                        const SizedBox(height: 6),
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 10),
+                          child: Text(
+                            'Conexiones ADB activas desde fuera de la app',
+                            style: TextStyle(color: p.textSecondary, fontSize: 12),
+                          ),
+                        ),
+                        ...tcpDevices.map((d) {
+                          final alreadySaved = savedHostPorts.contains(d.serial);
+                          return _TcpDeviceCard(
+                            device: d,
+                            alreadySaved: alreadySaved,
+                            onSave: alreadySaved ? null : () => _showSaveWifiDialog(context, ref, d),
+                          );
+                        }),
+                      ],
+                    ],
                   ),
                 );
               },
@@ -82,16 +130,60 @@ class UsbScreen extends ConsumerWidget {
     );
   }
 
-  void _showActivateWifiFlow(BuildContext context, WidgetRef ref, UsbDevice device) {
+  void _showActivateWifiFlow(BuildContext context, WidgetRef ref, UsbDevice device) async {
+    final config = ref.read(toolsConfigProvider).maybeWhen(data: (c) => c, orElse: () => null);
+
+    if (config == null || config.adbPath.isEmpty) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Configura la ruta de ADB en Configuración primero.')),
+        );
+      }
+      return;
+    }
+
+    final adb = AdbService(adbPath: config.adbPath);
+    await adb.enableTcpip(device.serial);
+    final suggestedIp = await adb.getSuggestedIp(device.serial);
+
+    if (!context.mounted) return;
+
     showDialog(
       context: context,
       builder: (_) => _ActivateWifiDialog(
         device: device,
+        initialIp: suggestedIp ?? '',
         onConfirm: (ip, port) {
           final newDevice = Device(
             id: DateTime.now().millisecondsSinceEpoch.toString(),
             alias: device.model ?? device.serial,
             host: ip,
+            port: port,
+            type: ConnectionType.wifi,
+          );
+          final notifier = ref.read(devicesProvider.notifier);
+          notifier.addDevice(newDevice).then((_) => notifier.connect(newDevice));
+        },
+      ),
+    );
+  }
+
+  void _showSaveWifiDialog(BuildContext context, WidgetRef ref, UsbDevice device) {
+    final lastColon = device.serial.lastIndexOf(':');
+    final host = lastColon != -1 ? device.serial.substring(0, lastColon) : device.serial;
+    final port = lastColon != -1 ? (int.tryParse(device.serial.substring(lastColon + 1)) ?? 5555) : 5555;
+
+    showDialog(
+      context: context,
+      builder: (_) => _SaveWifiDialog(
+        device: device,
+        host: host,
+        port: port,
+        onSave: (alias) {
+          final newDevice = Device(
+            id: DateTime.now().millisecondsSinceEpoch.toString(),
+            alias: alias,
+            host: host,
             port: port,
             serial: device.serial,
             type: ConnectionType.wifi,
@@ -103,6 +195,47 @@ class UsbScreen extends ConsumerWidget {
   }
 }
 
+// ── Section label ─────────────────────────────────────────────────────────────
+
+class _SectionLabel extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final int count;
+
+  const _SectionLabel({required this.label, required this.icon, required this.count});
+
+  @override
+  Widget build(BuildContext context) {
+    final p = AppPalette.of(context);
+    return Row(
+      children: [
+        Icon(icon, size: 13, color: p.textSecondary),
+        const SizedBox(width: 6),
+        Text(
+          label,
+          style: TextStyle(
+            color: p.textSecondary,
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.5,
+          ),
+        ),
+        const SizedBox(width: 8),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+          decoration: BoxDecoration(
+            color: p.surfaceHighlight,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Text('$count', style: TextStyle(fontSize: 11, color: p.textSecondary)),
+        ),
+      ],
+    );
+  }
+}
+
+// ── USB device card ───────────────────────────────────────────────────────────
+
 class _UsbDeviceCard extends StatelessWidget {
   final UsbDevice device;
   final VoidCallback onActivateWifi;
@@ -111,19 +244,19 @@ class _UsbDeviceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final p = AppPalette.of(context);
     final isConnected = device.status == ConnectionStatus.connected;
-    final statusColor = isConnected ? AppColors.statusConnected : AppColors.statusError;
+    final statusColor = isConnected ? p.statusConnected : p.statusError;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: p.surface,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppColors.borderColor),
+        border: Border.all(color: p.borderColor),
       ),
       child: Row(
         children: [
-          // Left status bar
           Container(
             width: 3,
             height: 80,
@@ -133,82 +266,68 @@ class _UsbDeviceCard extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 16),
-
-          // Info
           Expanded(
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: 16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    children: [
-                      Container(width: 8, height: 8,
-                          decoration: BoxDecoration(color: statusColor, shape: BoxShape.circle)),
+                  Row(children: [
+                    Container(
+                        width: 8,
+                        height: 8,
+                        decoration: BoxDecoration(color: statusColor, shape: BoxShape.circle)),
+                    const SizedBox(width: 8),
+                    Text(
+                      device.model ?? 'Dispositivo desconocido',
+                      style: TextStyle(color: p.textPrimary, fontSize: 14, fontWeight: FontWeight.w600),
+                    ),
+                    if (device.status == ConnectionStatus.error) ...[
                       const SizedBox(width: 8),
-                      Text(
-                        device.model ?? 'Dispositivo desconocido',
-                        style: const TextStyle(color: AppColors.textPrimary, fontSize: 14, fontWeight: FontWeight.w600),
-                      ),
-                      if (device.status == ConnectionStatus.error) ...[
-                        const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: AppColors.statusReconnecting.withValues(alpha: 0.12),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: const Text('Sin autorizar',
-                              style: TextStyle(fontSize: 11, color: AppColors.statusReconnecting)),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: p.statusReconnecting.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(4),
                         ),
-                      ],
+                        child: Text('Sin autorizar',
+                            style: TextStyle(fontSize: 11, color: p.statusReconnecting)),
+                      ),
                     ],
-                  ),
+                  ]),
                   const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      const SizedBox(width: 16),
-                      Text(device.serial,
-                          style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
-                      if (device.androidVersion != null) ...[
-                        const Text(' · ', style: TextStyle(color: AppColors.textDisabled)),
-                        Text('Android ${device.androidVersion}',
-                            style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
-                      ],
+                  Row(children: [
+                    const SizedBox(width: 16),
+                    Text(device.serial, style: TextStyle(color: p.textSecondary, fontSize: 12)),
+                    if (device.androidVersion != null) ...[
+                      Text(' · ', style: TextStyle(color: p.textDisabled)),
+                      Text('Android ${device.androidVersion}',
+                          style: TextStyle(color: p.textSecondary, fontSize: 12)),
                     ],
-                  ),
+                  ]),
                 ],
               ),
             ),
           ),
-
-          // Action
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: GestureDetector(
-              onTap: isConnected ? onActivateWifi : null,
-              child: Container(
+            child: ElevatedButton(
+              key: ValueKey('activate_wifi_${device.serial}'),
+              onPressed: isConnected ? onActivateWifi : null,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: isConnected
+                    ? p.accent.withValues(alpha: 0.12)
+                    : p.surfaceHighlight,
+                foregroundColor: isConnected ? p.accent : p.textDisabled,
+                elevation: 0,
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-                decoration: BoxDecoration(
-                  color: isConnected
-                      ? AppColors.accent.withValues(alpha: 0.12)
-                      : AppColors.surfaceHighlight,
-                  borderRadius: BorderRadius.circular(6),
-                  border: Border.all(
-                    color: isConnected
-                        ? AppColors.accent.withValues(alpha: 0.4)
-                        : AppColors.borderColor,
-                  ),
+                side: BorderSide(
+                  color: isConnected ? p.accent.withValues(alpha: 0.4) : p.borderColor,
                 ),
-                child: Text(
-                  'Activar WiFi ADB',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: isConnected ? AppColors.accent : AppColors.textDisabled,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
               ),
+              child: const Text('Activar WiFi ADB'),
             ),
           ),
         ],
@@ -217,19 +336,237 @@ class _UsbDeviceCard extends StatelessWidget {
   }
 }
 
+// ── TCP/IP device card ────────────────────────────────────────────────────────
+
+class _TcpDeviceCard extends StatelessWidget {
+  final UsbDevice device;
+  final bool alreadySaved;
+  final VoidCallback? onSave;
+
+  const _TcpDeviceCard({required this.device, required this.alreadySaved, required this.onSave});
+
+  @override
+  Widget build(BuildContext context) {
+    final p = AppPalette.of(context);
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      decoration: BoxDecoration(
+        color: p.surface,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: p.borderColor),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 3,
+            height: 72,
+            decoration: BoxDecoration(
+              color: p.statusConnected,
+              borderRadius: const BorderRadius.horizontal(left: Radius.circular(8)),
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(children: [
+                    Container(
+                        width: 8,
+                        height: 8,
+                        decoration: BoxDecoration(color: p.statusConnected, shape: BoxShape.circle)),
+                    const SizedBox(width: 8),
+                    Text(
+                      device.model ?? device.serial,
+                      style: TextStyle(color: p.textPrimary, fontSize: 14, fontWeight: FontWeight.w600),
+                    ),
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: p.statusConnected.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(4),
+                        border: Border.all(color: p.statusConnected.withValues(alpha: 0.3)),
+                      ),
+                      child: Text('Conectado',
+                          style: TextStyle(fontSize: 11, color: p.statusConnected, fontWeight: FontWeight.w500)),
+                    ),
+                  ]),
+                  const SizedBox(height: 4),
+                  Row(children: [
+                    const SizedBox(width: 16),
+                    Text(device.serial, style: TextStyle(color: p.textSecondary, fontSize: 12)),
+                    if (device.androidVersion != null) ...[
+                      Text(' · ', style: TextStyle(color: p.textDisabled)),
+                      Text('Android ${device.androidVersion}',
+                          style: TextStyle(color: p.textSecondary, fontSize: 12)),
+                    ],
+                  ]),
+                ],
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: alreadySaved
+                ? Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                    decoration: BoxDecoration(
+                      color: p.surfaceHighlight,
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(color: p.borderColor),
+                    ),
+                    child: Text('Ya guardado',
+                        style: TextStyle(fontSize: 12, color: p.textDisabled, fontWeight: FontWeight.w500)),
+                  )
+                : ElevatedButton.icon(
+                    key: ValueKey('save_wifi_${device.serial}'),
+                    onPressed: onSave,
+                    icon: const Icon(Icons.bookmark_add_outlined, size: 13),
+                    label: const Text('Guardar dispositivo'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: p.primaryBlue.withValues(alpha: 0.12),
+                      foregroundColor: p.primaryBlue,
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                      side: BorderSide(color: p.primaryBlue.withValues(alpha: 0.4)),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                      textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+                    ),
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Save WiFi dialog ──────────────────────────────────────────────────────────
+
+class _SaveWifiDialog extends StatefulWidget {
+  final UsbDevice device;
+  final String host;
+  final int port;
+  final Function(String alias) onSave;
+
+  const _SaveWifiDialog({required this.device, required this.host, required this.port, required this.onSave});
+
+  @override
+  State<_SaveWifiDialog> createState() => _SaveWifiDialogState();
+}
+
+class _SaveWifiDialogState extends State<_SaveWifiDialog> {
+  late TextEditingController _aliasController;
+
+  @override
+  void initState() {
+    super.initState();
+    _aliasController = TextEditingController(text: widget.device.model ?? widget.host);
+  }
+
+  @override
+  void dispose() {
+    _aliasController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final p = AppPalette.of(context);
+    return Dialog(
+      backgroundColor: p.surface,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: SizedBox(
+          width: 380,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Guardar dispositivo WiFi',
+                  style: TextStyle(color: p.textPrimary, fontSize: 16, fontWeight: FontWeight.w700)),
+              const SizedBox(height: 6),
+              Text('${widget.host}:${widget.port}',
+                  style: TextStyle(color: p.textSecondary, fontSize: 12)),
+              if (widget.device.androidVersion != null)
+                Text('Android ${widget.device.androidVersion}',
+                    style: TextStyle(color: p.textSecondary, fontSize: 12)),
+              const SizedBox(height: 20),
+              Text('Nombre del dispositivo',
+                  style: TextStyle(color: p.textSecondary, fontSize: 12, fontWeight: FontWeight.w500)),
+              const SizedBox(height: 8),
+              TextField(
+                controller: _aliasController,
+                autofocus: true,
+                style: TextStyle(color: p.textPrimary, fontSize: 13),
+                decoration: InputDecoration(
+                  filled: true,
+                  fillColor: p.background,
+                  isDense: true,
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: BorderSide(color: p.borderColor)),
+                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: BorderSide(color: p.borderColor)),
+                  focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: BorderSide(color: p.primaryBlue)),
+                ),
+              ),
+              const SizedBox(height: 24),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: Text('Cancelar', style: TextStyle(color: p.textSecondary)),
+                  ),
+                  const SizedBox(width: 8),
+                  ElevatedButton(
+                    onPressed: () {
+                      final alias = _aliasController.text.trim();
+                      if (alias.isNotEmpty) {
+                        widget.onSave(alias);
+                        Navigator.pop(context);
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: p.primaryBlue,
+                      foregroundColor: Colors.white,
+                    ),
+                    child: const Text('Guardar'),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ── Activate WiFi ADB dialog ──────────────────────────────────────────────────
+
 class _ActivateWifiDialog extends StatefulWidget {
   final UsbDevice device;
+  final String initialIp;
   final Function(String ip, int port) onConfirm;
 
-  const _ActivateWifiDialog({required this.device, required this.onConfirm});
+  const _ActivateWifiDialog({required this.device, this.initialIp = '', required this.onConfirm});
 
   @override
   State<_ActivateWifiDialog> createState() => _ActivateWifiDialogState();
 }
 
 class _ActivateWifiDialogState extends State<_ActivateWifiDialog> {
-  final _ipController = TextEditingController();
+  late final TextEditingController _ipController;
   final _portController = TextEditingController(text: '5555');
+
+  @override
+  void initState() {
+    super.initState();
+    _ipController = TextEditingController(text: widget.initialIp);
+  }
 
   @override
   void dispose() {
@@ -240,8 +577,9 @@ class _ActivateWifiDialogState extends State<_ActivateWifiDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final p = AppPalette.of(context);
     return Dialog(
-      backgroundColor: AppColors.surface,
+      backgroundColor: p.surface,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
         padding: const EdgeInsets.all(24),
@@ -251,14 +589,14 @@ class _ActivateWifiDialogState extends State<_ActivateWifiDialog> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Activar WiFi ADB',
-                  style: TextStyle(color: AppColors.textPrimary, fontSize: 16, fontWeight: FontWeight.w700)),
+              Text('Activar WiFi ADB',
+                  style: TextStyle(color: p.textPrimary, fontSize: 16, fontWeight: FontWeight.w700)),
               const SizedBox(height: 6),
               Text('Dispositivo: ${widget.device.model ?? widget.device.serial}',
-                  style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+                  style: TextStyle(color: p.textSecondary, fontSize: 12)),
               const SizedBox(height: 20),
-              const Text('Dirección IP del dispositivo',
-                  style: TextStyle(color: AppColors.textSecondary, fontSize: 12, fontWeight: FontWeight.w500)),
+              Text('Dirección IP del dispositivo',
+                  style: TextStyle(color: p.textSecondary, fontSize: 12, fontWeight: FontWeight.w500)),
               const SizedBox(height: 8),
               Row(
                 children: [
@@ -266,26 +604,17 @@ class _ActivateWifiDialogState extends State<_ActivateWifiDialog> {
                     flex: 3,
                     child: TextField(
                       controller: _ipController,
-                      style: const TextStyle(color: AppColors.textPrimary, fontSize: 13),
+                      style: TextStyle(color: p.textPrimary, fontSize: 13),
                       decoration: InputDecoration(
                         hintText: '192.168.1.100',
-                        hintStyle: const TextStyle(color: AppColors.textDisabled, fontSize: 13),
+                        hintStyle: TextStyle(color: p.textDisabled, fontSize: 13),
                         filled: true,
-                        fillColor: AppColors.background,
+                        fillColor: p.background,
                         isDense: true,
                         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(6),
-                          borderSide: const BorderSide(color: AppColors.borderColor),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(6),
-                          borderSide: const BorderSide(color: AppColors.borderColor),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(6),
-                          borderSide: const BorderSide(color: AppColors.primaryBlue),
-                        ),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: BorderSide(color: p.borderColor)),
+                        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: BorderSide(color: p.borderColor)),
+                        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: BorderSide(color: p.primaryBlue)),
                       ),
                     ),
                   ),
@@ -295,24 +624,15 @@ class _ActivateWifiDialogState extends State<_ActivateWifiDialog> {
                     child: TextField(
                       controller: _portController,
                       keyboardType: TextInputType.number,
-                      style: const TextStyle(color: AppColors.textPrimary, fontSize: 13),
+                      style: TextStyle(color: p.textPrimary, fontSize: 13),
                       decoration: InputDecoration(
                         filled: true,
-                        fillColor: AppColors.background,
+                        fillColor: p.background,
                         isDense: true,
                         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(6),
-                          borderSide: const BorderSide(color: AppColors.borderColor),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(6),
-                          borderSide: const BorderSide(color: AppColors.borderColor),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(6),
-                          borderSide: const BorderSide(color: AppColors.primaryBlue),
-                        ),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: BorderSide(color: p.borderColor)),
+                        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: BorderSide(color: p.borderColor)),
+                        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: BorderSide(color: p.primaryBlue)),
                       ),
                     ),
                   ),
@@ -324,7 +644,7 @@ class _ActivateWifiDialogState extends State<_ActivateWifiDialog> {
                 children: [
                   TextButton(
                     onPressed: () => Navigator.pop(context),
-                    child: const Text('Cancelar', style: TextStyle(color: AppColors.textSecondary)),
+                    child: Text('Cancelar', style: TextStyle(color: p.textSecondary)),
                   ),
                   const SizedBox(width: 8),
                   ElevatedButton(
@@ -337,7 +657,7 @@ class _ActivateWifiDialogState extends State<_ActivateWifiDialog> {
                       }
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primaryBlue,
+                      backgroundColor: p.primaryBlue,
                       foregroundColor: Colors.white,
                     ),
                     child: const Text('Conectar y Guardar'),
@@ -352,25 +672,28 @@ class _ActivateWifiDialogState extends State<_ActivateWifiDialog> {
   }
 }
 
-class _EmptyUsb extends StatelessWidget {
-  const _EmptyUsb();
+// ── Empty state ───────────────────────────────────────────────────────────────
+
+class _EmptyState extends StatelessWidget {
+  const _EmptyState();
 
   @override
   Widget build(BuildContext context) {
-    return const Center(
+    final p = AppPalette.of(context);
+    return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.usb, size: 48, color: AppColors.textDisabled),
-          SizedBox(height: 16),
-          Text('Sin dispositivos USB detectados',
-              style: TextStyle(color: AppColors.textPrimary, fontSize: 16, fontWeight: FontWeight.w600)),
-          SizedBox(height: 8),
-          Text('Conecta un dispositivo Android vía USB',
-              style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
-          SizedBox(height: 4),
+          Icon(Icons.devices_other, size: 48, color: p.textDisabled),
+          const SizedBox(height: 16),
+          Text('Sin dispositivos detectados',
+              style: TextStyle(color: p.textPrimary, fontSize: 16, fontWeight: FontWeight.w600)),
+          const SizedBox(height: 8),
+          Text('Conecta un dispositivo por USB o activa ADB WiFi',
+              style: TextStyle(color: p.textSecondary, fontSize: 13)),
+          const SizedBox(height: 4),
           Text('Se detecta automáticamente cada 5 segundos',
-              style: TextStyle(color: AppColors.textDisabled, fontSize: 12)),
+              style: TextStyle(color: p.textDisabled, fontSize: 12)),
         ],
       ),
     );

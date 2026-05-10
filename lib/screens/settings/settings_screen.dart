@@ -1,8 +1,10 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../shared/widgets/app_shell.dart';
 import '../../shared/theme/app_colors.dart';
 import '../../providers/tools_config_provider.dart';
+import '../../providers/locale_provider.dart';
 import '../../core/models/tools_config.dart';
 import '../../core/services/tools_config_service.dart';
 
@@ -16,22 +18,28 @@ class SettingsScreen extends ConsumerStatefulWidget {
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
+    final p = AppPalette.of(context);
     final configAsync = ref.watch(toolsConfigProvider);
     final notifier = ref.read(toolsConfigProvider.notifier);
+    final locale = ref.watch(localeProvider);
+    final localeNotifier = ref.read(localeProvider.notifier);
 
     return AppShell(
       currentRoute: 'settings',
       child: Column(
         children: [
-          // Top bar
           _TopBar(),
-          Container(height: 1, color: AppColors.divider),
-          // Content
+          Container(height: 1, color: p.divider),
           Expanded(
             child: configAsync.when(
               loading: () => const Center(child: CircularProgressIndicator()),
               error: (e, _) => Center(child: Text('Error: $e')),
-              data: (config) => _SettingsBody(config: config, notifier: notifier),
+              data: (config) => _SettingsBody(
+                config: config,
+                notifier: notifier,
+                locale: locale,
+                onSetLocale: (l) => localeNotifier.setLocale(l),
+              ),
             ),
           ),
         ],
@@ -43,15 +51,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 class _TopBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    final p = AppPalette.of(context);
     return Container(
       height: 64,
       padding: const EdgeInsets.symmetric(horizontal: 24),
-      color: AppColors.background,
-      child: const Align(
+      color: p.background,
+      child: Align(
         alignment: Alignment.centerLeft,
         child: Text(
           'Configuración',
-          style: TextStyle(color: AppColors.textPrimary, fontSize: 18, fontWeight: FontWeight.w700),
+          style: TextStyle(color: p.textPrimary, fontSize: 18, fontWeight: FontWeight.w700),
         ),
       ),
     );
@@ -61,11 +70,19 @@ class _TopBar extends StatelessWidget {
 class _SettingsBody extends StatelessWidget {
   final ToolsConfig config;
   final ToolsConfigNotifier notifier;
+  final Locale? locale;
+  final void Function(Locale?) onSetLocale;
 
-  const _SettingsBody({required this.config, required this.notifier});
+  const _SettingsBody({
+    required this.config,
+    required this.notifier,
+    required this.locale,
+    required this.onSetLocale,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final p = AppPalette.of(context);
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(32, 28, 32, 28),
       child: Column(
@@ -73,9 +90,9 @@ class _SettingsBody extends StatelessWidget {
         children: [
           _SectionTitle(title: 'Herramientas Externas'),
           const SizedBox(height: 6),
-          const Text(
+          Text(
             'Configura las rutas de ADB y scrcpy instaladas en tu sistema. La app nunca almacenará para toda las sesiones.',
-            style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
+            style: TextStyle(color: p.textSecondary, fontSize: 12),
           ),
           const SizedBox(height: 20),
           _ToolRow(
@@ -103,13 +120,13 @@ class _SettingsBody extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Row(
-            children: const [
-              Icon(Icons.info_outline, size: 13, color: AppColors.textSecondary),
-              SizedBox(width: 6),
+            children: [
+              Icon(Icons.info_outline, size: 13, color: p.textSecondary),
+              const SizedBox(width: 6),
               Expanded(
                 child: Text(
                   'Windows: visita github.com/Genymobile/scrcpy para instalar scrcpy. La app no incluye scrcpy internamente.',
-                  style: TextStyle(color: AppColors.textSecondary, fontSize: 11),
+                  style: TextStyle(color: p.textSecondary, fontSize: 11),
                 ),
               ),
             ],
@@ -124,7 +141,7 @@ class _SettingsBody extends StatelessWidget {
             value: config.autoReconnectOnStart,
             onChanged: (v) => notifier.saveConfig(config.copyWith(autoReconnectOnStart: v)),
           ),
-          Container(height: 1, color: AppColors.divider, margin: const EdgeInsets.symmetric(vertical: 12)),
+          Container(height: 1, color: p.divider, margin: const EdgeInsets.symmetric(vertical: 12)),
           _ToggleRow(
             title: 'Iniciar minimizado',
             subtitle: 'La app inicia en segundo plano sin ventana visible',
@@ -159,6 +176,67 @@ class _SettingsBody extends StatelessWidget {
               ),
             ],
           ),
+
+          const SizedBox(height: 32),
+          _SectionTitle(title: 'Idioma'),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              _LanguageOption(
+                label: 'Sistema',
+                sublabel: 'Idioma del SO',
+                selected: locale == null,
+                onTap: () => onSetLocale(null),
+              ),
+              const SizedBox(width: 12),
+              _LanguageOption(
+                label: 'Español',
+                sublabel: 'Spanish',
+                selected: locale?.languageCode == 'es',
+                onTap: () => onSetLocale(const Locale('es')),
+              ),
+              const SizedBox(width: 12),
+              _LanguageOption(
+                label: 'English',
+                sublabel: 'Inglés',
+                selected: locale?.languageCode == 'en',
+                onTap: () => onSetLocale(const Locale('en')),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 40),
+          Container(height: 1, color: p.divider),
+          const SizedBox(height: 24),
+          Row(
+            children: [
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: p.accent.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(Icons.bolt, color: p.accent, size: 20),
+              ),
+              const SizedBox(width: 14),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('FastADB',
+                      style: TextStyle(color: p.textPrimary, fontSize: 14, fontWeight: FontWeight.w700)),
+                  const SizedBox(height: 2),
+                  Text('Versión 1.0.0',
+                      style: TextStyle(color: p.textSecondary, fontSize: 12)),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Gestor de conexiones ADB para Android — Windows, macOS y Linux',
+            style: TextStyle(color: p.textDisabled, fontSize: 11),
+          ),
         ],
       ),
     );
@@ -172,9 +250,10 @@ class _SectionTitle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final p = AppPalette.of(context);
     return Text(
       title,
-      style: const TextStyle(color: AppColors.textPrimary, fontSize: 15, fontWeight: FontWeight.w700),
+      style: TextStyle(color: p.textPrimary, fontSize: 15, fontWeight: FontWeight.w700),
     );
   }
 }
@@ -210,6 +289,9 @@ class _ToolRowState extends State<_ToolRow> {
   void initState() {
     super.initState();
     _controller = TextEditingController(text: widget.path);
+    if (widget.path.isNotEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _verify());
+    }
   }
 
   @override
@@ -220,6 +302,7 @@ class _ToolRowState extends State<_ToolRow> {
 
   @override
   Widget build(BuildContext context) {
+    final p = AppPalette.of(context);
     final hasPath = _controller.text.trim().isNotEmpty;
     final verified = _result?.success == true;
     final failed = _result?.success == false;
@@ -227,9 +310,9 @@ class _ToolRowState extends State<_ToolRow> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: p.surface,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppColors.borderColor),
+        border: Border.all(color: p.borderColor),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -241,18 +324,18 @@ class _ToolRowState extends State<_ToolRow> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(widget.name,
-                        style: const TextStyle(color: AppColors.textPrimary, fontSize: 13, fontWeight: FontWeight.w600)),
+                        style: TextStyle(color: p.textPrimary, fontSize: 13, fontWeight: FontWeight.w600)),
                     Text(widget.subtitle,
-                        style: const TextStyle(color: AppColors.textSecondary, fontSize: 11)),
+                        style: TextStyle(color: p.textSecondary, fontSize: 11)),
                   ],
                 ),
               ),
               if (verified)
-                _StatusTag(label: '● Detectado · ${_result!.version ?? ""}', color: AppColors.statusConnected)
+                _StatusTag(label: '● Detectado · ${_result!.version ?? ""}', color: p.statusConnected)
               else if (failed)
-                _StatusTag(label: '● No configurado', color: AppColors.statusError)
+                _StatusTag(label: '● No configurado', color: p.statusError)
               else if (hasPath)
-                _StatusTag(label: '● Sin verificar', color: AppColors.statusReconnecting),
+                _StatusTag(label: '● Sin verificar', color: p.statusReconnecting),
             ],
           ),
           const SizedBox(height: 12),
@@ -262,39 +345,24 @@ class _ToolRowState extends State<_ToolRow> {
                 child: TextField(
                   controller: _controller,
                   onChanged: widget.onPathChanged,
-                  style: const TextStyle(color: AppColors.textPrimary, fontSize: 12),
+                  style: TextStyle(color: p.textPrimary, fontSize: 12),
                   decoration: InputDecoration(
                     hintText: '/usr/local/bin/adb',
-                    hintStyle: const TextStyle(color: AppColors.textDisabled, fontSize: 12),
+                    hintStyle: TextStyle(color: p.textDisabled, fontSize: 12),
                     filled: true,
-                    fillColor: AppColors.background,
+                    fillColor: p.background,
                     isDense: true,
                     contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(6),
-                        borderSide: const BorderSide(color: AppColors.borderColor)),
-                    enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(6),
-                        borderSide: const BorderSide(color: AppColors.borderColor)),
-                    focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(6),
-                        borderSide: const BorderSide(color: AppColors.primaryBlue)),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: BorderSide(color: p.borderColor)),
+                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: BorderSide(color: p.borderColor)),
+                    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: BorderSide(color: p.primaryBlue)),
                   ),
                 ),
               ),
               const SizedBox(width: 8),
-              _SmallButton(
-                label: 'Explorar...',
-                onTap: _detect,
-                loading: _detecting,
-              ),
+              _SmallButton(label: 'Explorar...', onTap: _detect, loading: _detecting),
               const SizedBox(width: 6),
-              _SmallButton(
-                label: 'Verificar',
-                onTap: hasPath ? _verify : null,
-                loading: _verifying,
-                primary: true,
-              ),
+              _SmallButton(label: 'Verificar', onTap: hasPath ? _verify : null, loading: _verifying, primary: true),
             ],
           ),
         ],
@@ -304,10 +372,10 @@ class _ToolRowState extends State<_ToolRow> {
 
   Future<void> _detect() async {
     setState(() => _detecting = true);
-    final p = await widget.onAutoDetect();
-    if (p != null) {
-      _controller.text = p;
-      widget.onPathChanged(p);
+    final path = await widget.onAutoDetect();
+    if (path != null) {
+      _controller.text = path;
+      widget.onPathChanged(path);
     }
     setState(() => _detecting = false);
   }
@@ -348,15 +416,16 @@ class _SmallButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final p = AppPalette.of(context);
     return GestureDetector(
       onTap: loading ? null : onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
         decoration: BoxDecoration(
-          color: primary ? AppColors.primaryBlue.withValues(alpha: 0.15) : AppColors.surfaceHighlight,
+          color: primary ? p.primaryBlue.withValues(alpha: 0.15) : p.surfaceHighlight,
           borderRadius: BorderRadius.circular(6),
           border: Border.all(
-            color: primary ? AppColors.primaryBlue.withValues(alpha: 0.4) : AppColors.borderColor,
+            color: primary ? p.primaryBlue.withValues(alpha: 0.4) : p.borderColor,
           ),
         ),
         child: loading
@@ -364,7 +433,7 @@ class _SmallButton extends StatelessWidget {
             : Text(
                 label,
                 style: TextStyle(
-                  color: primary ? AppColors.primaryBlue : AppColors.textSecondary,
+                  color: primary ? p.primaryBlue : p.textSecondary,
                   fontSize: 12,
                   fontWeight: FontWeight.w500,
                 ),
@@ -389,27 +458,75 @@ class _ToggleRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final p = AppPalette.of(context);
     return Row(
       children: [
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(title, style: const TextStyle(color: AppColors.textPrimary, fontSize: 13, fontWeight: FontWeight.w500)),
+              Text(title, style: TextStyle(color: p.textPrimary, fontSize: 13, fontWeight: FontWeight.w500)),
               const SizedBox(height: 2),
-              Text(subtitle, style: const TextStyle(color: AppColors.textSecondary, fontSize: 11)),
+              Text(subtitle, style: TextStyle(color: p.textSecondary, fontSize: 11)),
             ],
           ),
         ),
         Switch(
           value: value,
           onChanged: onChanged,
-          activeColor: AppColors.accent,
-          activeTrackColor: AppColors.accent.withValues(alpha: 0.3),
-          inactiveTrackColor: AppColors.surfaceHighlight,
-          inactiveThumbColor: AppColors.textSecondary,
+          activeColor: p.accent,
+          activeTrackColor: p.accent.withValues(alpha: 0.3),
+          inactiveTrackColor: p.surfaceHighlight,
+          inactiveThumbColor: p.textSecondary,
         ),
       ],
+    );
+  }
+}
+
+class _LanguageOption extends StatelessWidget {
+  final String label;
+  final String sublabel;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _LanguageOption({
+    required this.label,
+    required this.sublabel,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final p = AppPalette.of(context);
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 140,
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: selected ? p.primaryBlue.withValues(alpha: 0.1) : p.surface,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: selected ? p.primaryBlue : p.borderColor,
+            width: selected ? 1.5 : 1,
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(label,
+                style: TextStyle(
+                  color: selected ? p.textPrimary : p.textSecondary,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                )),
+            const SizedBox(height: 2),
+            Text(sublabel, style: TextStyle(color: p.textSecondary, fontSize: 11)),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -429,16 +546,17 @@ class _ThemeOption extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final p = AppPalette.of(context);
     return GestureDetector(
       onTap: onTap,
       child: Container(
         width: 140,
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: selected ? AppColors.primaryBlue.withValues(alpha: 0.1) : AppColors.surface,
+          color: selected ? p.primaryBlue.withValues(alpha: 0.1) : p.surface,
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
-            color: selected ? AppColors.primaryBlue : AppColors.borderColor,
+            color: selected ? p.primaryBlue : p.borderColor,
             width: selected ? 1.5 : 1,
           ),
         ),
@@ -447,13 +565,12 @@ class _ThemeOption extends StatelessWidget {
           children: [
             Text(label,
                 style: TextStyle(
-                  color: selected ? AppColors.textPrimary : AppColors.textSecondary,
+                  color: selected ? p.textPrimary : p.textSecondary,
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
                 )),
             const SizedBox(height: 2),
-            Text(sublabel,
-                style: const TextStyle(color: AppColors.textSecondary, fontSize: 11)),
+            Text(sublabel, style: TextStyle(color: p.textSecondary, fontSize: 11)),
           ],
         ),
       ),

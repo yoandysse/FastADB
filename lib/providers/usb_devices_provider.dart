@@ -4,40 +4,35 @@ import '../core/services/adb_service.dart';
 import 'tools_config_provider.dart';
 
 final usbDevicesProvider = StreamProvider<List<UsbDevice>>((ref) async* {
-  final toolsConfig = ref.watch(toolsConfigProvider);
-
-  AdbService? adbService;
-
-  await toolsConfig.whenData((config) async {
-    if (config.adbPath.isNotEmpty) {
-      adbService = AdbService(adbPath: config.adbPath);
-      await adbService!.startServer();
-    }
-  });
-
-  if (adbService == null) {
-    yield const [];
-    return;
-  }
-
+  // Use ref.read (not ref.watch) so toolsConfig changes don't restart the stream.
+  // The stream re-evaluates the config on every poll cycle instead.
   while (true) {
     try {
-      final devices = await adbService!.listUsbDevices();
+      final config = ref
+          .read(toolsConfigProvider)
+          .maybeWhen(data: (c) => c, orElse: () => null);
 
-      // Fetch additional info for each device
-      for (int i = 0; i < devices.length; i++) {
-        final model = await adbService!.getModel(devices[i].serial);
-        final androidVersion = await adbService!.getAndroidVersion(devices[i].serial);
+      if (config == null || config.adbPath.isEmpty) {
+        yield const [];
+      } else {
+        final adbService = AdbService(adbPath: config.adbPath);
+        final devices = await adbService.listUsbDevices();
 
-        devices[i] = devices[i].copyWith(model: model, androidVersion: androidVersion);
+        // Fetch model + android version for each detected device
+        for (int i = 0; i < devices.length; i++) {
+          final model = await adbService.getModel(devices[i].serial);
+          final androidVersion =
+              await adbService.getAndroidVersion(devices[i].serial);
+          devices[i] =
+              devices[i].copyWith(model: model, androidVersion: androidVersion);
+        }
+
+        yield devices;
       }
-
-      yield devices;
-    } catch (e) {
+    } catch (_) {
       yield const [];
     }
 
-    // Poll every 5 seconds
     await Future.delayed(const Duration(seconds: 5));
   }
 });

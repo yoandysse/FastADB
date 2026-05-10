@@ -3,6 +3,7 @@ import 'package:uuid/uuid.dart';
 import '../../../core/models/device.dart';
 import '../../../core/models/connection_status.dart';
 import '../../../shared/theme/app_colors.dart';
+import '../../../l10n/app_localizations.dart';
 
 class AddDeviceModal extends StatefulWidget {
   final Function(Device) onSave;
@@ -61,6 +62,9 @@ class _AddDeviceModalState extends State<AddDeviceModal> {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
+    final p = AppPalette.of(context);
+
     return Dialog(
       backgroundColor: Colors.transparent,
       insetPadding: const EdgeInsets.all(0),
@@ -69,36 +73,35 @@ class _AddDeviceModalState extends State<AddDeviceModal> {
           width: 520,
           constraints: const BoxConstraints(maxHeight: 680),
           decoration: BoxDecoration(
-            color: AppColors.background,
+            color: p.background,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: AppColors.borderColor),
+            border: Border.all(color: p.borderColor),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               _ModalHeader(
-                title: widget.editDevice == null ? 'Agregar Dispositivo' : 'Editar Dispositivo',
-                subtitle: 'Configura una nueva conexión ADB',
+                title: widget.editDevice == null ? l.modalAddTitle : l.modalEditTitle,
+                subtitle: l.modalSubtitle,
                 onClose: () => Navigator.pop(context),
               ),
-              Container(height: 1, color: AppColors.divider),
+              Container(height: 1, color: p.divider),
               Flexible(
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.all(24),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Connection type
-                      const Text('Tipo de conexión',
-                          style: TextStyle(color: AppColors.textSecondary, fontSize: 13, fontWeight: FontWeight.w500)),
+                      Text(l.modalConnectionType,
+                          style: TextStyle(color: p.textSecondary, fontSize: 13, fontWeight: FontWeight.w500)),
                       const SizedBox(height: 10),
                       Row(
                         children: [
                           Expanded(
                             child: _TypeOption(
                               icon: Icons.wifi,
-                              title: 'WiFi / TCP-IP',
-                              subtitle: 'Conexión inalámbrica por IP y puerto',
+                              title: l.modalWifiTitle,
+                              subtitle: l.modalWifiSubtitle,
                               selected: _type == ConnectionType.wifi,
                               onTap: () => setState(() => _type = ConnectionType.wifi),
                             ),
@@ -107,8 +110,8 @@ class _AddDeviceModalState extends State<AddDeviceModal> {
                           Expanded(
                             child: _TypeOption(
                               icon: Icons.usb,
-                              title: 'USB',
-                              subtitle: 'Detección automática de dispositivos',
+                              title: l.modalUsbTitle,
+                              subtitle: l.modalUsbSubtitle,
                               selected: _type == ConnectionType.usb,
                               onTap: () => setState(() => _type = ConnectionType.usb),
                             ),
@@ -118,35 +121,23 @@ class _AddDeviceModalState extends State<AddDeviceModal> {
 
                       const SizedBox(height: 20),
 
-                      // Alias
-                      _FieldLabel(label: 'Alias del dispositivo'),
+                      _FieldLabel(label: l.modalAliasLabel),
                       const SizedBox(height: 8),
-                      _StyledField(
-                        controller: _aliasController,
-                        hint: 'ej. Pixel 7 — Oficina',
-                      ),
+                      _StyledField(controller: _aliasController, hint: l.modalAliasHint),
 
                       if (_type == ConnectionType.wifi) ...[
                         const SizedBox(height: 20),
-                        _FieldLabel(label: 'Dirección IP y Puerto'),
+                        _FieldLabel(label: l.modalIpPortLabel),
                         const SizedBox(height: 8),
                         Row(
                           children: [
                             Expanded(
                               flex: 3,
-                              child: _StyledField(
-                                controller: _ipController,
-                                hint: '192.168.1.100',
-                                keyboardType: TextInputType.number,
-                              ),
+                              child: _StyledField(controller: _ipController, hint: '192.168.1.100', keyboardType: TextInputType.number),
                             ),
                             const SizedBox(width: 10),
                             Expanded(
-                              child: _StyledField(
-                                controller: _portController,
-                                hint: '5555',
-                                keyboardType: TextInputType.number,
-                              ),
+                              child: _StyledField(controller: _portController, hint: '5555', keyboardType: TextInputType.number),
                             ),
                           ],
                         ),
@@ -154,15 +145,14 @@ class _AddDeviceModalState extends State<AddDeviceModal> {
 
                       const SizedBox(height: 20),
 
-                      // Auto-reconnect
                       GestureDetector(
                         onTap: () => setState(() => _autoReconnect = !_autoReconnect),
                         child: Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: AppColors.surface,
+                            color: p.surface,
                             borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: AppColors.borderColor),
+                            border: Border.all(color: p.borderColor),
                           ),
                           child: Row(
                             children: [
@@ -170,25 +160,23 @@ class _AddDeviceModalState extends State<AddDeviceModal> {
                                 width: 18,
                                 height: 18,
                                 decoration: BoxDecoration(
-                                  color: _autoReconnect ? AppColors.primaryBlue : Colors.transparent,
+                                  color: _autoReconnect ? p.primaryBlue : Colors.transparent,
                                   borderRadius: BorderRadius.circular(4),
                                   border: Border.all(
-                                    color: _autoReconnect ? AppColors.primaryBlue : AppColors.borderColor,
+                                    color: _autoReconnect ? p.primaryBlue : p.borderColor,
                                     width: 1.5,
                                   ),
                                 ),
-                                child: _autoReconnect
-                                    ? const Icon(Icons.check, size: 12, color: Colors.white)
-                                    : null,
+                                child: _autoReconnect ? const Icon(Icons.check, size: 12, color: Colors.white) : null,
                               ),
                               const SizedBox(width: 12),
-                              const Column(
+                              Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text('Reconexión automática',
-                                      style: TextStyle(color: AppColors.textPrimary, fontSize: 13, fontWeight: FontWeight.w500)),
-                                  Text('Intentar reconectar al iniciar la app',
-                                      style: TextStyle(color: AppColors.textSecondary, fontSize: 11)),
+                                  Text(l.modalAutoReconnectTitle,
+                                      style: TextStyle(color: p.textPrimary, fontSize: 13, fontWeight: FontWeight.w500)),
+                                  Text(l.modalAutoReconnectSubtitle,
+                                      style: TextStyle(color: p.textSecondary, fontSize: 11)),
                                 ],
                               ),
                             ],
@@ -198,13 +186,12 @@ class _AddDeviceModalState extends State<AddDeviceModal> {
 
                       const SizedBox(height: 20),
 
-                      // Shortcuts hint
-                      const Text('Accesos rápidos para este dispositivo',
-                          style: TextStyle(color: AppColors.textSecondary, fontSize: 13, fontWeight: FontWeight.w500)),
+                      Text(l.modalShortcutsLabel,
+                          style: TextStyle(color: p.textSecondary, fontSize: 13, fontWeight: FontWeight.w500)),
                       const SizedBox(height: 8),
                       Wrap(
                         spacing: 8,
-                        children: [
+                        children: const [
                           _ShortcutTag(label: 'scrcpy', selected: true),
                           _ShortcutTag(label: 'Shell', selected: false),
                           _ShortcutTag(label: 'Logcat', selected: false),
@@ -214,11 +201,8 @@ class _AddDeviceModalState extends State<AddDeviceModal> {
                   ),
                 ),
               ),
-              Container(height: 1, color: AppColors.divider),
-              _ModalFooter(
-                onCancel: () => Navigator.pop(context),
-                onSave: _save,
-              ),
+              Container(height: 1, color: p.divider),
+              _ModalFooter(onCancel: () => Navigator.pop(context), onSave: _save),
             ],
           ),
         ),
@@ -236,20 +220,19 @@ class _ModalHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final p = AppPalette.of(context);
     return Container(
       padding: const EdgeInsets.fromLTRB(24, 20, 20, 20),
-      color: AppColors.surface,
+      color: p.surface,
       child: Row(
         children: [
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title,
-                    style: const TextStyle(color: AppColors.textPrimary, fontSize: 16, fontWeight: FontWeight.w700)),
+                Text(title, style: TextStyle(color: p.textPrimary, fontSize: 16, fontWeight: FontWeight.w700)),
                 const SizedBox(height: 2),
-                Text(subtitle,
-                    style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+                Text(subtitle, style: TextStyle(color: p.textSecondary, fontSize: 12)),
               ],
             ),
           ),
@@ -258,11 +241,8 @@ class _ModalHeader extends StatelessWidget {
             child: Container(
               width: 28,
               height: 28,
-              decoration: BoxDecoration(
-                color: AppColors.surfaceHighlight,
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: const Icon(Icons.close, size: 16, color: AppColors.textSecondary),
+              decoration: BoxDecoration(color: p.surfaceHighlight, borderRadius: BorderRadius.circular(6)),
+              child: Icon(Icons.close, size: 16, color: p.textSecondary),
             ),
           ),
         ],
@@ -279,9 +259,11 @@ class _ModalFooter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
+    final p = AppPalette.of(context);
     return Container(
       padding: const EdgeInsets.fromLTRB(24, 16, 24, 16),
-      color: AppColors.surface,
+      color: p.surface,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
@@ -289,12 +271,8 @@ class _ModalFooter extends StatelessWidget {
             onTap: onCancel,
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 9),
-              decoration: BoxDecoration(
-                color: AppColors.surfaceHighlight,
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: const Text('Cancelar',
-                  style: TextStyle(color: AppColors.textSecondary, fontSize: 13, fontWeight: FontWeight.w500)),
+              decoration: BoxDecoration(color: p.surfaceHighlight, borderRadius: BorderRadius.circular(6)),
+              child: Text(l.actionCancel, style: TextStyle(color: p.textSecondary, fontSize: 13, fontWeight: FontWeight.w500)),
             ),
           ),
           const SizedBox(width: 8),
@@ -302,16 +280,12 @@ class _ModalFooter extends StatelessWidget {
             onTap: onSave,
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 9),
-              decoration: BoxDecoration(
-                color: AppColors.primaryBlue,
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: const Row(
+              decoration: BoxDecoration(color: p.primaryBlue, borderRadius: BorderRadius.circular(6)),
+              child: Row(
                 children: [
-                  Icon(Icons.save_outlined, size: 14, color: Colors.white),
-                  SizedBox(width: 6),
-                  Text('Guardar Dispositivo',
-                      style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600)),
+                  const Icon(Icons.save_outlined, size: 14, color: Colors.white),
+                  const SizedBox(width: 6),
+                  Text(l.modalSaveDevice, style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600)),
                 ],
               ),
             ),
@@ -329,44 +303,30 @@ class _TypeOption extends StatelessWidget {
   final bool selected;
   final VoidCallback onTap;
 
-  const _TypeOption({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.selected,
-    required this.onTap,
-  });
+  const _TypeOption({required this.icon, required this.title, required this.subtitle, required this.selected, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
+    final p = AppPalette.of(context);
     return GestureDetector(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: selected ? AppColors.primaryBlue.withValues(alpha: 0.1) : AppColors.surface,
+          color: selected ? p.primaryBlue.withValues(alpha: 0.1) : p.surface,
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-            color: selected ? AppColors.primaryBlue : AppColors.borderColor,
-            width: selected ? 1.5 : 1,
-          ),
+          border: Border.all(color: selected ? p.primaryBlue : p.borderColor, width: selected ? 1.5 : 1),
         ),
         child: Row(
           children: [
-            Icon(icon, size: 18, color: selected ? AppColors.primaryBlue : AppColors.textSecondary),
+            Icon(icon, size: 18, color: selected ? p.primaryBlue : p.textSecondary),
             const SizedBox(width: 10),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title,
-                      style: TextStyle(
-                        color: selected ? AppColors.textPrimary : AppColors.textSecondary,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                      )),
-                  Text(subtitle,
-                      style: const TextStyle(color: AppColors.textSecondary, fontSize: 11)),
+                  Text(title, style: TextStyle(color: selected ? p.textPrimary : p.textSecondary, fontSize: 13, fontWeight: FontWeight.w600)),
+                  Text(subtitle, style: TextStyle(color: p.textSecondary, fontSize: 11)),
                 ],
               ),
             ),
@@ -379,13 +339,12 @@ class _TypeOption extends StatelessWidget {
 
 class _FieldLabel extends StatelessWidget {
   final String label;
-
   const _FieldLabel({required this.label});
 
   @override
   Widget build(BuildContext context) {
-    return Text(label,
-        style: const TextStyle(color: AppColors.textSecondary, fontSize: 13, fontWeight: FontWeight.w500));
+    final p = AppPalette.of(context);
+    return Text(label, style: TextStyle(color: p.textSecondary, fontSize: 13, fontWeight: FontWeight.w500));
   }
 }
 
@@ -398,28 +357,20 @@ class _StyledField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final p = AppPalette.of(context);
     return TextField(
       controller: controller,
       keyboardType: keyboardType,
-      style: const TextStyle(color: AppColors.textPrimary, fontSize: 13),
+      style: TextStyle(color: p.textPrimary, fontSize: 13),
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: const TextStyle(color: AppColors.textDisabled, fontSize: 13),
+        hintStyle: TextStyle(color: p.textDisabled, fontSize: 13),
         filled: true,
-        fillColor: AppColors.surface,
+        fillColor: p.surface,
         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: AppColors.borderColor),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: AppColors.borderColor),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: AppColors.primaryBlue, width: 1.5),
-        ),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: p.borderColor)),
+        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: p.borderColor)),
+        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: p.primaryBlue, width: 1.5)),
         isDense: true,
       ),
     );
@@ -434,23 +385,15 @@ class _ShortcutTag extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final p = AppPalette.of(context);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: selected ? AppColors.accent.withValues(alpha: 0.12) : AppColors.surfaceHighlight,
+        color: selected ? p.accent.withValues(alpha: 0.12) : p.surfaceHighlight,
         borderRadius: BorderRadius.circular(5),
-        border: Border.all(
-          color: selected ? AppColors.accent.withValues(alpha: 0.4) : AppColors.borderColor,
-        ),
+        border: Border.all(color: selected ? p.accent.withValues(alpha: 0.4) : p.borderColor),
       ),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontSize: 12,
-          color: selected ? AppColors.accent : AppColors.textSecondary,
-          fontWeight: FontWeight.w500,
-        ),
-      ),
+      child: Text(label, style: TextStyle(fontSize: 12, color: selected ? p.accent : p.textSecondary, fontWeight: FontWeight.w500)),
     );
   }
 }

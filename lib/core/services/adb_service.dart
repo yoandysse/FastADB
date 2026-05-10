@@ -78,7 +78,19 @@ class AdbService {
     }
   }
 
-  /// List USB-connected devices
+  /// Returns true if the serial corresponds to a TCP/IP (WiFi) connection.
+  /// TCP/IP serials have the form `host:port` where port is a number
+  /// (e.g. "192.168.1.1:5555", "[fe80::1%eth0]:5555").
+  /// USB serials are pure alphanumeric strings with no trailing numeric port.
+  static bool isTcpIpSerial(String serial) {
+    final lastColon = serial.lastIndexOf(':');
+    if (lastColon == -1) return false;
+    final afterColon = serial.substring(lastColon + 1);
+    return int.tryParse(afterColon) != null;
+  }
+
+  /// List all ADB-connected devices (both USB and TCP/IP).
+  /// Use [isTcpIpSerial] to distinguish them at the call site.
   Future<List<UsbDevice>> listUsbDevices() async {
     try {
       final result = await _runner.run([adbPath, 'devices']);

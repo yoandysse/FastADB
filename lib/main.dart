@@ -35,7 +35,7 @@ void main() async {
 }
 
 class FastADBApp extends ConsumerWidget {
-  const FastADBApp({Key? key}) : super(key: key);
+  const FastADBApp({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

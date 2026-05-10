@@ -8,11 +8,11 @@ class StatusPill extends StatelessWidget {
   final bool small;
 
   const StatusPill({
-    Key? key,
+    super.key,
     required this.status,
     this.label,
     this.small = false,
-  }) : super(key: key);
+  });
 
   Color _color(AppPalette p) => switch (status) {
     ConnectionStatus.connected => p.statusConnected,

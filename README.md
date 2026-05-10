@@ -2,7 +2,21 @@
 
 A cross-platform Flutter desktop application to manage Android devices via ADB without the terminal.
 
-**Current Status:** MVP (Phases 1-3 Completed) ✅
+**Current Status:** MVP Beta (`0.1.0-beta.1`)
+
+FastADB is currently distributed as a beta pre-release. Expect the core ADB workflows to work, but treat the app as an MVP while installation, packaging, and edge cases continue to stabilize.
+
+## Downloads
+
+Beta builds are published from GitHub Releases:
+
+- Open the repository **Releases** page.
+- Download the artifact for your OS:
+  - `FastADB-v0.1.0-beta.1-macos.zip`
+  - `FastADB-v0.1.0-beta.1-windows-x64.zip`
+  - `FastADB-v0.1.0-beta.1-linux-x64.tar.gz`
+
+The current beta builds are not code-signed or notarized. On macOS and Windows, the operating system may show a security warning the first time the app is opened.
 
 ## Features Implemented
 
@@ -131,6 +145,48 @@ lib/
 
 ## Development
 
+## Release Process
+
+FastADB uses semantic versioning with beta pre-releases:
+
+```text
+MAJOR.MINOR.PATCH-prerelease+build
+```
+
+Current app version:
+
+```yaml
+version: 0.1.0-beta.1+1
+```
+
+Release tag format:
+
+```text
+v0.1.0-beta.1
+v0.1.0-beta.2
+v0.1.1-beta.1
+v0.2.0-beta.1
+v1.0.0
+```
+
+Before publishing a beta:
+
+```bash
+flutter pub get
+flutter analyze
+flutter test
+flutter build macos --release
+```
+
+Publish a beta release:
+
+```bash
+git tag v0.1.0-beta.1
+git push origin main --tags
+```
+
+The GitHub Actions workflow builds Windows, macOS, and Linux packages, then creates a GitHub Release. Tags containing a prerelease suffix such as `-beta.1` are marked as pre-releases automatically.
+
 ### Adding new ADB commands
 
 1. **Add method to AdbService**:
@@ -228,4 +284,4 @@ MIT - See LICENSE file
 
 ---
 
-**FastADB MVP v1.0** — Built with Flutter 3.x, Riverpod, Hive, go_router
+**FastADB MVP Beta 0.1.0** — Built with Flutter 3.x, Riverpod, Hive, go_router

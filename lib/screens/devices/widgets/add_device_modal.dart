@@ -9,7 +9,7 @@ class AddDeviceModal extends StatefulWidget {
   final Function(Device) onSave;
   final Device? editDevice;
 
-  const AddDeviceModal({Key? key, required this.onSave, this.editDevice}) : super(key: key);
+  const AddDeviceModal({super.key, required this.onSave, this.editDevice});
 
   @override
   State<AddDeviceModal> createState() => _AddDeviceModalState();

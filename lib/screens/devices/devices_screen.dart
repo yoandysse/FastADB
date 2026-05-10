@@ -14,7 +14,7 @@ import '../../l10n/app_localizations.dart';
 import 'widgets/add_device_modal.dart';
 
 class DevicesScreen extends ConsumerWidget {
-  const DevicesScreen({Key? key}) : super(key: key);
+  const DevicesScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

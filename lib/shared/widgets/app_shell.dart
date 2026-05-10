@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../../config/app_info.dart';
 import '../theme/app_colors.dart';
 import '../../l10n/app_localizations.dart';
 
@@ -8,10 +9,10 @@ class AppShell extends StatelessWidget {
   final String currentRoute;
 
   const AppShell({
-    Key? key,
+    super.key,
     required this.child,
     required this.currentRoute,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -128,7 +129,7 @@ class _Sidebar extends StatelessWidget {
             padding: const EdgeInsets.only(bottom: 14),
             child: Center(
               child: Text(
-                'v1.0.0',
+                AppInfo.versionLabel,
                 style: TextStyle(
                   fontSize: 10,
                   color: p.textDisabled,
@@ -175,12 +176,16 @@ class _NavItem extends StatelessWidget {
               color: isActive ? p.textPrimary : p.textSecondary,
             ),
             const SizedBox(width: 10),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
-                color: isActive ? p.textPrimary : p.textSecondary,
+            Expanded(
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
+                  color: isActive ? p.textPrimary : p.textSecondary,
+                ),
               ),
             ),
           ],

@@ -7,6 +7,7 @@ import '../../providers/tools_config_provider.dart';
 import '../../providers/locale_provider.dart';
 import '../../core/models/tools_config.dart';
 import '../../core/services/tools_config_service.dart';
+import '../../config/app_info.dart';
 import '../../l10n/app_localizations.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
@@ -226,10 +227,10 @@ class _SettingsBody extends StatelessWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('FastADB',
+                  Text(AppInfo.name,
                       style: TextStyle(color: p.textPrimary, fontSize: 14, fontWeight: FontWeight.w700)),
                   const SizedBox(height: 2),
-                  Text(l.aboutVersion('1.0.0'),
+                  Text(l.aboutVersion(AppInfo.version),
                       style: TextStyle(color: p.textSecondary, fontSize: 12)),
                 ],
               ),

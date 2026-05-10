@@ -7,11 +7,11 @@ class TerminalOutput extends StatelessWidget {
   final VoidCallback? onCollapse;
 
   const TerminalOutput({
-    Key? key,
+    super.key,
     this.lines = const [],
     this.expanded = false,
     this.onCollapse,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

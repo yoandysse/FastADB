@@ -9,7 +9,7 @@ import '../../providers/shortcuts_provider.dart';
 import '../../l10n/app_localizations.dart';
 
 class ShortcutsScreen extends ConsumerWidget {
-  const ShortcutsScreen({Key? key}) : super(key: key);
+  const ShortcutsScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -157,37 +157,6 @@ class _ShortcutList extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-}
-
-class _SectionLabel extends StatelessWidget {
-  final String label;
-  final int count;
-
-  const _SectionLabel({required this.label, required this.count});
-
-  @override
-  Widget build(BuildContext context) {
-    final p = AppPalette.of(context);
-    return Row(
-      children: [
-        Text(
-          label.toUpperCase(),
-          style: TextStyle(
-            color: p.textSecondary,
-            fontSize: 11,
-            fontWeight: FontWeight.w600,
-            letterSpacing: 0.8,
-          ),
-        ),
-        const SizedBox(width: 8),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
-          decoration: BoxDecoration(color: p.surfaceHighlight, borderRadius: BorderRadius.circular(8)),
-          child: Text('$count', style: TextStyle(fontSize: 11, color: p.textSecondary)),
-        ),
-      ],
     );
   }
 }

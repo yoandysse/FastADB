@@ -13,14 +13,14 @@ class DeviceCard extends StatelessWidget {
   final VoidCallback? onDelete;
 
   const DeviceCard({
-    Key? key,
+    super.key,
     required this.device,
     required this.status,
     this.onConnect,
     this.onDisconnect,
     this.onEdit,
     this.onDelete,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

@@ -11,7 +11,7 @@ import '../../core/services/adb_service.dart';
 import '../../l10n/app_localizations.dart';
 
 class UsbScreen extends ConsumerWidget {
-  const UsbScreen({Key? key}) : super(key: key);
+  const UsbScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

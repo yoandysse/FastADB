@@ -13,14 +13,14 @@ class ToolPathRow extends StatefulWidget {
   final Function(String path) onPathChanged;
 
   const ToolPathRow({
-    Key? key,
+    super.key,
     required this.label,
     required this.iconName,
     required this.currentPath,
     required this.onAutoDetect,
     required this.onVerify,
     required this.onPathChanged,
-  }) : super(key: key);
+  });
 
   @override
   State<ToolPathRow> createState() => _ToolPathRowState();

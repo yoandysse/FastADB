@@ -177,6 +177,14 @@ class DevicesNotifier extends StateNotifier<AsyncValue<List<DeviceState>>> {
     } catch (_) {}
   }
 
+  Future<AdbResult?> runShortcut(Device device, String commandTemplate) async {
+    final adb = _adb;
+    if (adb == null) return AdbResult(success: false, error: 'ADB not configured');
+    final serial = _effectiveSerial(device);
+    if (serial.isEmpty) return AdbResult(success: false, error: 'No serial for device');
+    return adb.runShortcutCommand(commandTemplate, serial);
+  }
+
   Future<void> launchScrcpy(Device device) async {
     final config = _ref
         .read(toolsConfigProvider)

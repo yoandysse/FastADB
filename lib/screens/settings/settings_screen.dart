@@ -1,15 +1,16 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:file_picker/file_picker.dart';
 import '../../shared/widgets/app_shell.dart';
 import '../../shared/theme/app_colors.dart';
 import '../../providers/tools_config_provider.dart';
 import '../../providers/locale_provider.dart';
 import '../../core/models/tools_config.dart';
 import '../../core/services/tools_config_service.dart';
+import '../../l10n/app_localizations.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
-  const SettingsScreen({Key? key}) : super(key: key);
+  const SettingsScreen({super.key});
 
   @override
   ConsumerState<SettingsScreen> createState() => _SettingsScreenState();
@@ -51,6 +52,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 class _TopBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
     final p = AppPalette.of(context);
     return Container(
       height: 64,
@@ -59,7 +61,7 @@ class _TopBar extends StatelessWidget {
       child: Align(
         alignment: Alignment.centerLeft,
         child: Text(
-          'Configuración',
+          l.settingsTitle,
           style: TextStyle(color: p.textPrimary, fontSize: 18, fontWeight: FontWeight.w700),
         ),
       ),
@@ -82,22 +84,23 @@ class _SettingsBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
     final p = AppPalette.of(context);
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(32, 28, 32, 28),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _SectionTitle(title: 'Herramientas Externas'),
+          _SectionTitle(title: l.settingsToolsSection),
           const SizedBox(height: 6),
           Text(
-            'Configura las rutas de ADB y scrcpy instaladas en tu sistema. La app nunca almacenará para toda las sesiones.',
+            l.settingsToolsSubtitle,
             style: TextStyle(color: p.textSecondary, fontSize: 12),
           ),
           const SizedBox(height: 20),
           _ToolRow(
-            name: 'Android Debug Bridge (ADB)',
-            subtitle: 'Herramienta de depuración Android',
+            name: l.settingsAdbName,
+            subtitle: l.settingsAdbSubtitle,
             path: config.adbPath,
             onAutoDetect: () => notifier.autoDetectAdb(),
             onVerify: (path) async {
@@ -108,8 +111,8 @@ class _SettingsBody extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           _ToolRow(
-            name: 'scrcpy',
-            subtitle: 'Espejo de pantalla Android',
+            name: l.settingsScrcpyName,
+            subtitle: l.settingsScrcpySubtitle,
             path: config.scrcpyPath,
             onAutoDetect: () => notifier.autoDetectScrcpy(),
             onVerify: (path) async {
@@ -125,7 +128,7 @@ class _SettingsBody extends StatelessWidget {
               const SizedBox(width: 6),
               Expanded(
                 child: Text(
-                  'Windows: visita github.com/Genymobile/scrcpy para instalar scrcpy. La app no incluye scrcpy internamente.',
+                  l.settingsWindowsNote,
                   style: TextStyle(color: p.textSecondary, fontSize: 11),
                 ),
               ),
@@ -133,44 +136,44 @@ class _SettingsBody extends StatelessWidget {
           ),
 
           const SizedBox(height: 32),
-          _SectionTitle(title: 'General'),
+          _SectionTitle(title: l.settingsGeneralSection),
           const SizedBox(height: 16),
           _ToggleRow(
-            title: 'Reconexión automática al inicio',
-            subtitle: 'Intentar reconectar dispositivos WiFi al iniciar la app',
+            title: l.settingsAutoReconnectTitle,
+            subtitle: l.settingsAutoReconnectSubtitle,
             value: config.autoReconnectOnStart,
             onChanged: (v) => notifier.saveConfig(config.copyWith(autoReconnectOnStart: v)),
           ),
           Container(height: 1, color: p.divider, margin: const EdgeInsets.symmetric(vertical: 12)),
           _ToggleRow(
-            title: 'Iniciar minimizado',
-            subtitle: 'La app inicia en segundo plano sin ventana visible',
+            title: l.settingsStartMinimizedTitle,
+            subtitle: l.settingsStartMinimizedSubtitle,
             value: config.startMinimized,
             onChanged: (v) => notifier.saveConfig(config.copyWith(startMinimized: v)),
           ),
 
           const SizedBox(height: 32),
-          _SectionTitle(title: 'Apariencia'),
+          _SectionTitle(title: l.settingsAppearanceSection),
           const SizedBox(height: 16),
           Row(
             children: [
               _ThemeOption(
-                label: 'Sistema',
-                sublabel: 'Sigue el modo del SO',
+                label: l.settingsThemeSystem,
+                sublabel: l.settingsThemeSystemSub,
                 selected: config.theme == 'system',
                 onTap: () => notifier.saveConfig(config.copyWith(theme: 'system')),
               ),
               const SizedBox(width: 12),
               _ThemeOption(
-                label: 'Oscuro',
-                sublabel: 'Siempre modo oscuro',
+                label: l.settingsThemeDark,
+                sublabel: l.settingsThemeDarkSub,
                 selected: config.theme == 'dark',
                 onTap: () => notifier.saveConfig(config.copyWith(theme: 'dark')),
               ),
               const SizedBox(width: 12),
               _ThemeOption(
-                label: 'Claro',
-                sublabel: 'Siempre modo claro',
+                label: l.settingsThemeLight,
+                sublabel: l.settingsThemeLightSub,
                 selected: config.theme == 'light',
                 onTap: () => notifier.saveConfig(config.copyWith(theme: 'light')),
               ),
@@ -178,27 +181,27 @@ class _SettingsBody extends StatelessWidget {
           ),
 
           const SizedBox(height: 32),
-          _SectionTitle(title: 'Idioma'),
+          _SectionTitle(title: l.settingsLanguageSection),
           const SizedBox(height: 16),
           Row(
             children: [
               _LanguageOption(
-                label: 'Sistema',
-                sublabel: 'Idioma del SO',
+                label: l.settingsLangAuto,
+                sublabel: l.settingsLangAutoSub,
                 selected: locale == null,
                 onTap: () => onSetLocale(null),
               ),
               const SizedBox(width: 12),
               _LanguageOption(
-                label: 'Español',
-                sublabel: 'Spanish',
+                label: l.settingsLangEs,
+                sublabel: l.settingsLangEsSub,
                 selected: locale?.languageCode == 'es',
                 onTap: () => onSetLocale(const Locale('es')),
               ),
               const SizedBox(width: 12),
               _LanguageOption(
-                label: 'English',
-                sublabel: 'Inglés',
+                label: l.settingsLangEn,
+                sublabel: l.settingsLangEnSub,
                 selected: locale?.languageCode == 'en',
                 onTap: () => onSetLocale(const Locale('en')),
               ),
@@ -226,7 +229,7 @@ class _SettingsBody extends StatelessWidget {
                   Text('FastADB',
                       style: TextStyle(color: p.textPrimary, fontSize: 14, fontWeight: FontWeight.w700)),
                   const SizedBox(height: 2),
-                  Text('Versión 1.0.0',
+                  Text(l.aboutVersion('1.0.0'),
                       style: TextStyle(color: p.textSecondary, fontSize: 12)),
                 ],
               ),
@@ -234,7 +237,7 @@ class _SettingsBody extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'Gestor de conexiones ADB para Android — Windows, macOS y Linux',
+            l.aboutDescription,
             style: TextStyle(color: p.textDisabled, fontSize: 11),
           ),
         ],
@@ -281,6 +284,7 @@ class _ToolRow extends StatefulWidget {
 
 class _ToolRowState extends State<_ToolRow> {
   late TextEditingController _controller;
+  bool _picking = false;
   bool _detecting = false;
   bool _verifying = false;
   ToolVerifyResult? _result;
@@ -302,6 +306,7 @@ class _ToolRowState extends State<_ToolRow> {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
     final p = AppPalette.of(context);
     final hasPath = _controller.text.trim().isNotEmpty;
     final verified = _result?.success == true;
@@ -331,11 +336,11 @@ class _ToolRowState extends State<_ToolRow> {
                 ),
               ),
               if (verified)
-                _StatusTag(label: '● Detectado · ${_result!.version ?? ""}', color: p.statusConnected)
+                _StatusTag(label: l.settingsStatusDetected(_result!.version ?? ''), color: p.statusConnected)
               else if (failed)
-                _StatusTag(label: '● No configurado', color: p.statusError)
+                _StatusTag(label: l.settingsStatusNotConfigured, color: p.statusError)
               else if (hasPath)
-                _StatusTag(label: '● Sin verificar', color: p.statusReconnecting),
+                _StatusTag(label: l.settingsStatusUnverified, color: p.statusReconnecting),
             ],
           ),
           const SizedBox(height: 12),
@@ -360,9 +365,11 @@ class _ToolRowState extends State<_ToolRow> {
                 ),
               ),
               const SizedBox(width: 8),
-              _SmallButton(label: 'Explorar...', onTap: _detect, loading: _detecting),
+              _SmallButton(label: l.actionBrowse, onTap: _pickFile, loading: _picking),
+              const SizedBox(width: 4),
+              _AutoDetectButton(tooltip: l.settingsAutoDetect, onTap: _autoDetect, loading: _detecting),
               const SizedBox(width: 6),
-              _SmallButton(label: 'Verificar', onTap: hasPath ? _verify : null, loading: _verifying, primary: true),
+              _SmallButton(label: l.actionVerify, onTap: hasPath ? _verify : null, loading: _verifying, primary: true),
             ],
           ),
         ],
@@ -370,12 +377,32 @@ class _ToolRowState extends State<_ToolRow> {
     );
   }
 
-  Future<void> _detect() async {
+  Future<void> _pickFile() async {
+    setState(() => _picking = true);
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.any,
+        dialogTitle: AppLocalizations.of(context)!.actionBrowse,
+        allowMultiple: false,
+      );
+      if (result != null && result.files.single.path != null) {
+        final path = result.files.single.path!;
+        _controller.text = path;
+        widget.onPathChanged(path);
+        await _verify();
+      }
+    } finally {
+      setState(() => _picking = false);
+    }
+  }
+
+  Future<void> _autoDetect() async {
     setState(() => _detecting = true);
     final path = await widget.onAutoDetect();
     if (path != null) {
       _controller.text = path;
       widget.onPathChanged(path);
+      await _verify();
     }
     setState(() => _detecting = false);
   }
@@ -443,6 +470,36 @@ class _SmallButton extends StatelessWidget {
   }
 }
 
+class _AutoDetectButton extends StatelessWidget {
+  final String tooltip;
+  final VoidCallback onTap;
+  final bool loading;
+
+  const _AutoDetectButton({required this.tooltip, required this.onTap, this.loading = false});
+
+  @override
+  Widget build(BuildContext context) {
+    final p = AppPalette.of(context);
+    return GestureDetector(
+      onTap: loading ? null : onTap,
+      child: Tooltip(
+        message: tooltip,
+        child: Container(
+          padding: const EdgeInsets.all(7),
+          decoration: BoxDecoration(
+            color: p.surfaceHighlight,
+            borderRadius: BorderRadius.circular(6),
+            border: Border.all(color: p.borderColor),
+          ),
+          child: loading
+              ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 1.5))
+              : Icon(Icons.manage_search, size: 14, color: p.textSecondary),
+        ),
+      ),
+    );
+  }
+}
+
 class _ToggleRow extends StatelessWidget {
   final String title;
   final String subtitle;
@@ -474,7 +531,7 @@ class _ToggleRow extends StatelessWidget {
         Switch(
           value: value,
           onChanged: onChanged,
-          activeColor: p.accent,
+          activeThumbColor: p.accent,
           activeTrackColor: p.accent.withValues(alpha: 0.3),
           inactiveTrackColor: p.surfaceHighlight,
           inactiveThumbColor: p.textSecondary,

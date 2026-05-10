@@ -1,3 +1,4 @@
+import 'dart:io';
 import '../models/device.dart';
 import '../models/connection_status.dart';
 import '../../shared/utils/adb_output_parser.dart';
@@ -222,6 +223,39 @@ class AdbService {
       return AdbResult(
         success: false,
         error: result.stderr?.toString() ?? 'Failed to start server',
+      );
+    } catch (e) {
+      return AdbResult(success: false, error: e.toString());
+    }
+  }
+
+  /// Run an arbitrary shortcut command template against a device.
+  ///
+  /// Substitutes `%DEVICE%` with [deviceSerial] and replaces a leading `adb`
+  /// token with the configured [adbPath], then executes via the platform shell
+  /// so that pipes and redirects work.
+  Future<AdbResult> runShortcutCommand(String commandTemplate, String deviceSerial) async {
+    try {
+      var cmd = commandTemplate.replaceAll('%DEVICE%', deviceSerial);
+
+      // Replace leading 'adb' token (with trailing space or end of string)
+      // with the configured adb binary path.
+      if (cmd == 'adb' || cmd.startsWith('adb ')) {
+        cmd = '$adbPath${cmd.substring(3)}';
+      }
+
+      final shellArgs = Platform.isWindows
+          ? ['cmd', '/c', cmd]
+          : ['sh', '-c', cmd];
+
+      final result = await _runner.run(shellArgs);
+      final stdout = result.stdout?.toString().trim() ?? '';
+      final stderr = result.stderr?.toString().trim() ?? '';
+
+      return AdbResult(
+        success: result.exitCode == 0,
+        message: stdout.isNotEmpty ? stdout : null,
+        error: stderr.isNotEmpty ? stderr : null,
       );
     } catch (e) {
       return AdbResult(success: false, error: e.toString());

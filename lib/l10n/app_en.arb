@@ -12,13 +12,20 @@
   "statusError": "No network",
 
   "actionCancel": "Cancel",
+  "actionClose": "Close",
   "actionSave": "Save",
   "actionDelete": "Delete",
+  "actionCreate": "Create",
   "actionConnect": "Connect",
   "actionDisconnect": "Disconnect",
   "actionEdit": "Edit",
   "actionVerify": "Verify",
   "actionBrowse": "Browse...",
+
+  "shortcutsRunning": "Running...",
+  "shortcutsCompleted": "Completed",
+  "shortcutsFailed": "Failed",
+  "shortcutsNoOutput": "(no output)",
 
   "devicesTitle": "My Devices",
   "devicesCount": "{count, plural, =1{1 device} other{{count} devices}}",
@@ -34,6 +41,9 @@
   "devicesEmptySubtitle": "Add a WiFi device to get started",
   "devicesAddDevice": "Add Device",
   "devicesGlobalShortcuts": "Global Quick Actions",
+  "devicesShortcutHint": "Select a device first, or tap a shortcut to choose",
+  "devicesNoConnected": "No connected devices",
+  "devicesSelectDevice": "Select a device",
   "devicesDeleteTitle": "Delete device",
   "devicesDeleteConfirm": "Delete \"{alias}\"?",
   "@devicesDeleteConfirm": {
@@ -49,10 +59,17 @@
   },
 
   "usbTitle": "Detected Devices",
+  "usbDeviceCount": "{count, plural, =1{1 device} other{{count} devices}}",
+  "@usbDeviceCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
   "usbRefresh": "Updates every 5s",
   "usbSectionUsb": "USB",
   "usbSectionWifi": "WiFi / TCP-IP detected",
   "usbWifiSubtitle": "Active ADB connections from outside the app",
+  "usbUnknownDevice": "Unknown device",
   "usbUnauthorized": "Unauthorized",
   "usbActivateWifi": "Enable WiFi ADB",
   "usbSaveDevice": "Save device",
@@ -74,8 +91,32 @@
   "usbSaveWifiNameLabel": "Device name",
 
   "shortcutsTitle": "Quick Actions",
+  "shortcutsNew": "New action",
+  "shortcutsSectionGlobal": "Global",
+  "shortcutsSectionDevice": "Per device",
+  "shortcutsDeviceHint": "Use %DEVICE% in the command to replace it with the active device serial.",
+  "shortcutsDeleteTitle": "Delete quick action",
+  "shortcutsDeleteConfirm": "Delete \"{name}\"?",
+  "@shortcutsDeleteConfirm": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "shortcutsCopyCmd": "Copy command",
+  "shortcutsCreate": "Create quick action",
   "shortcutsEmptyTitle": "No quick actions configured",
   "shortcutsEmptySubtitle": "Create fast ADB commands for your devices",
+  "shortcutsModalCreateTitle": "New quick action",
+  "shortcutsModalEditTitle": "Edit quick action",
+  "shortcutsModalNameLabel": "Name",
+  "shortcutsModalNameHint": "e.g. Open Shell",
+  "shortcutsModalNameRequired": "Name is required",
+  "shortcutsModalCmdLabel": "Command",
+  "shortcutsModalCmdRequired": "Command is required",
+  "shortcutsModalCmdHint": "Use %DEVICE% for the active device serial",
+  "shortcutsModalIconLabel": "Icon",
+  "shortcutsModalGlobalTitle": "Global",
+  "shortcutsModalGlobalSubtitle": "Appears in the action bar of all devices",
 
   "settingsTitle": "Settings",
   "settingsToolsSection": "External Tools",
@@ -85,6 +126,7 @@
   "settingsScrcpyName": "scrcpy",
   "settingsScrcpySubtitle": "Android screen mirror",
   "settingsWindowsNote": "Windows: visit github.com/Genymobile/scrcpy to install scrcpy. The app does not include scrcpy internally.",
+  "settingsAutoDetect": "Auto-detect",
   "settingsStatusDetected": "● Detected · {version}",
   "@settingsStatusDetected": {
     "placeholders": {
@@ -106,12 +148,12 @@
   "settingsThemeLight": "Light",
   "settingsThemeLightSub": "Always light mode",
   "settingsLanguageSection": "Language",
-  "settingsLangAuto": "Automatic",
-  "settingsLangAutoSub": "Follow system language",
+  "settingsLangAuto": "System",
+  "settingsLangAutoSub": "Follows OS language",
   "settingsLangEn": "English",
-  "settingsLangEnSub": "Always in English",
+  "settingsLangEnSub": "English",
   "settingsLangEs": "Español",
-  "settingsLangEsSub": "Siempre en español",
+  "settingsLangEsSub": "Spanish",
   "aboutVersion": "Version {version}",
   "@aboutVersion": {
     "placeholders": {

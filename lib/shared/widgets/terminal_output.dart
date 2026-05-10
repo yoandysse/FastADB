@@ -19,11 +19,13 @@ class TerminalOutput extends StatelessWidget {
       return const SizedBox.shrink();
     }
 
+    final p = AppPalette.of(context);
+
     return Container(
-      color: AppColors.background,
+      color: p.background,
       decoration: BoxDecoration(
         border: Border(
-          top: BorderSide(color: AppColors.borderColor),
+          top: BorderSide(color: p.borderColor),
         ),
       ),
       child: Column(
@@ -32,17 +34,17 @@ class TerminalOutput extends StatelessWidget {
           if (expanded)
             Container(
               padding: const EdgeInsets.all(8),
-              color: AppColors.surface,
+              color: p.surface,
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
+                  Text(
                     'Terminal Output',
-                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: p.textPrimary),
                   ),
                   if (onCollapse != null)
                     IconButton(
-                      icon: const Icon(Icons.close, size: 16),
+                      icon: Icon(Icons.close, size: 16, color: p.textSecondary),
                       onPressed: onCollapse,
                       padding: EdgeInsets.zero,
                       constraints: const BoxConstraints(),
@@ -59,10 +61,10 @@ class TerminalOutput extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                     child: Text(
                       lines[index],
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 11,
                         fontFamily: 'Courier',
-                        color: AppColors.textSecondary,
+                        color: p.textSecondary,
                       ),
                     ),
                   );
@@ -70,9 +72,9 @@ class TerminalOutput extends StatelessWidget {
               ),
             ),
           if (expanded && lines.isEmpty)
-            const Expanded(
+            Expanded(
               child: Center(
-                child: Text('No output'),
+                child: Text('No output', style: TextStyle(color: p.textSecondary)),
               ),
             ),
         ],

@@ -36,10 +36,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get actionCancel => 'Cancel';
 
   @override
+  String get actionClose => 'Close';
+
+  @override
   String get actionSave => 'Save';
 
   @override
   String get actionDelete => 'Delete';
+
+  @override
+  String get actionCreate => 'Create';
 
   @override
   String get actionConnect => 'Connect';
@@ -55,6 +61,18 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get actionBrowse => 'Browse...';
+
+  @override
+  String get shortcutsRunning => 'Running...';
+
+  @override
+  String get shortcutsCompleted => 'Completed';
+
+  @override
+  String get shortcutsFailed => 'Failed';
+
+  @override
+  String get shortcutsNoOutput => '(no output)';
 
   @override
   String get devicesTitle => 'My Devices';
@@ -92,6 +110,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get devicesGlobalShortcuts => 'Global Quick Actions';
 
   @override
+  String get devicesShortcutHint =>
+      'Select a device first, or tap a shortcut to choose';
+
+  @override
+  String get devicesNoConnected => 'No connected devices';
+
+  @override
+  String get devicesSelectDevice => 'Select a device';
+
+  @override
   String get devicesDeleteTitle => 'Delete device';
 
   @override
@@ -108,6 +136,17 @@ class AppLocalizationsEn extends AppLocalizations {
   String get usbTitle => 'Detected Devices';
 
   @override
+  String usbDeviceCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count devices',
+      one: '1 device',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get usbRefresh => 'Updates every 5s';
 
   @override
@@ -118,6 +157,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get usbWifiSubtitle => 'Active ADB connections from outside the app';
+
+  @override
+  String get usbUnknownDevice => 'Unknown device';
 
   @override
   String get usbUnauthorized => 'Unauthorized';
@@ -167,11 +209,73 @@ class AppLocalizationsEn extends AppLocalizations {
   String get shortcutsTitle => 'Quick Actions';
 
   @override
+  String get shortcutsNew => 'New action';
+
+  @override
+  String get shortcutsSectionGlobal => 'Global';
+
+  @override
+  String get shortcutsSectionDevice => 'Per device';
+
+  @override
+  String get shortcutsDeviceHint =>
+      'Use %DEVICE% in the command to replace it with the active device serial.';
+
+  @override
+  String get shortcutsDeleteTitle => 'Delete quick action';
+
+  @override
+  String shortcutsDeleteConfirm(String name) {
+    return 'Delete \"$name\"?';
+  }
+
+  @override
+  String get shortcutsCopyCmd => 'Copy command';
+
+  @override
+  String get shortcutsCreate => 'Create quick action';
+
+  @override
   String get shortcutsEmptyTitle => 'No quick actions configured';
 
   @override
   String get shortcutsEmptySubtitle =>
       'Create fast ADB commands for your devices';
+
+  @override
+  String get shortcutsModalCreateTitle => 'New quick action';
+
+  @override
+  String get shortcutsModalEditTitle => 'Edit quick action';
+
+  @override
+  String get shortcutsModalNameLabel => 'Name';
+
+  @override
+  String get shortcutsModalNameHint => 'e.g. Open Shell';
+
+  @override
+  String get shortcutsModalNameRequired => 'Name is required';
+
+  @override
+  String get shortcutsModalCmdLabel => 'Command';
+
+  @override
+  String get shortcutsModalCmdRequired => 'Command is required';
+
+  @override
+  String get shortcutsModalCmdHint =>
+      'Use %DEVICE% for the active device serial';
+
+  @override
+  String get shortcutsModalIconLabel => 'Icon';
+
+  @override
+  String get shortcutsModalGlobalTitle => 'Global';
+
+  @override
+  String get shortcutsModalGlobalSubtitle =>
+      'Appears in the action bar of all devices';
 
   @override
   String get settingsTitle => 'Settings';
@@ -198,6 +302,9 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get settingsWindowsNote =>
       'Windows: visit github.com/Genymobile/scrcpy to install scrcpy. The app does not include scrcpy internally.';
+
+  @override
+  String get settingsAutoDetect => 'Auto-detect';
 
   @override
   String settingsStatusDetected(String version) {
@@ -252,22 +359,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsLanguageSection => 'Language';
 
   @override
-  String get settingsLangAuto => 'Automatic';
+  String get settingsLangAuto => 'System';
 
   @override
-  String get settingsLangAutoSub => 'Follow system language';
+  String get settingsLangAutoSub => 'Follows OS language';
 
   @override
   String get settingsLangEn => 'English';
 
   @override
-  String get settingsLangEnSub => 'Always in English';
+  String get settingsLangEnSub => 'English';
 
   @override
   String get settingsLangEs => 'Español';
 
   @override
-  String get settingsLangEsSub => 'Siempre en español';
+  String get settingsLangEsSub => 'Spanish';
 
   @override
   String aboutVersion(String version) {

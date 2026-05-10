@@ -8,12 +8,14 @@ import '../../providers/tools_config_provider.dart';
 import '../../core/models/device.dart';
 import '../../core/models/connection_status.dart';
 import '../../core/services/adb_service.dart';
+import '../../l10n/app_localizations.dart';
 
 class UsbScreen extends ConsumerWidget {
   const UsbScreen({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l = AppLocalizations.of(context)!;
     final p = AppPalette.of(context);
     final usbAsync = ref.watch(usbDevicesProvider);
     final savedDevicesAsync = ref.watch(devicesProvider);
@@ -36,7 +38,7 @@ class UsbScreen extends ConsumerWidget {
             child: Row(
               children: [
                 Text(
-                  'Dispositivos Detectados',
+                  l.usbTitle,
                   style: TextStyle(color: p.textPrimary, fontSize: 18, fontWeight: FontWeight.w700),
                 ),
                 const SizedBox(width: 10),
@@ -48,7 +50,7 @@ class UsbScreen extends ConsumerWidget {
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Text(
-                      '${list.length} dispositivo${list.length != 1 ? 's' : ''}',
+                      l.usbDeviceCount(list.length),
                       style: TextStyle(fontSize: 12, color: p.textSecondary),
                     ),
                   ),
@@ -62,7 +64,7 @@ class UsbScreen extends ConsumerWidget {
                         child: CircularProgressIndicator(strokeWidth: 1.5))
                     : Icon(Icons.refresh, size: 16, color: p.textSecondary),
                 const SizedBox(width: 6),
-                Text('Actualiza cada 5s', style: TextStyle(color: p.textSecondary, fontSize: 11)),
+                Text(l.usbRefresh, style: TextStyle(color: p.textSecondary, fontSize: 11)),
               ],
             ),
           ),
@@ -91,7 +93,7 @@ class UsbScreen extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       if (usbDevices.isNotEmpty) ...[
-                        _SectionLabel(label: 'USB', icon: Icons.usb, count: usbDevices.length),
+                        _SectionLabel(label: l.usbSectionUsb, icon: Icons.usb, count: usbDevices.length),
                         const SizedBox(height: 10),
                         ...usbDevices.map((d) => _UsbDeviceCard(
                               device: d,
@@ -101,12 +103,12 @@ class UsbScreen extends ConsumerWidget {
 
                       if (tcpDevices.isNotEmpty) ...[
                         if (usbDevices.isNotEmpty) const SizedBox(height: 24),
-                        _SectionLabel(label: 'WiFi / TCP-IP detectados', icon: Icons.wifi, count: tcpDevices.length),
+                        _SectionLabel(label: l.usbSectionWifi, icon: Icons.wifi, count: tcpDevices.length),
                         const SizedBox(height: 6),
                         Padding(
                           padding: const EdgeInsets.only(bottom: 10),
                           child: Text(
-                            'Conexiones ADB activas desde fuera de la app',
+                            l.usbWifiSubtitle,
                             style: TextStyle(color: p.textSecondary, fontSize: 12),
                           ),
                         ),
@@ -131,12 +133,13 @@ class UsbScreen extends ConsumerWidget {
   }
 
   void _showActivateWifiFlow(BuildContext context, WidgetRef ref, UsbDevice device) async {
+    final l = AppLocalizations.of(context)!;
     final config = ref.read(toolsConfigProvider).maybeWhen(data: (c) => c, orElse: () => null);
 
     if (config == null || config.adbPath.isEmpty) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Configura la ruta de ADB en Configuración primero.')),
+          SnackBar(content: Text(l.usbAdbNotConfigured)),
         );
       }
       return;
@@ -244,6 +247,7 @@ class _UsbDeviceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
     final p = AppPalette.of(context);
     final isConnected = device.status == ConnectionStatus.connected;
     final statusColor = isConnected ? p.statusConnected : p.statusError;
@@ -279,7 +283,7 @@ class _UsbDeviceCard extends StatelessWidget {
                         decoration: BoxDecoration(color: statusColor, shape: BoxShape.circle)),
                     const SizedBox(width: 8),
                     Text(
-                      device.model ?? 'Dispositivo desconocido',
+                      device.model ?? l.usbUnknownDevice,
                       style: TextStyle(color: p.textPrimary, fontSize: 14, fontWeight: FontWeight.w600),
                     ),
                     if (device.status == ConnectionStatus.error) ...[
@@ -290,7 +294,7 @@ class _UsbDeviceCard extends StatelessWidget {
                           color: p.statusReconnecting.withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(4),
                         ),
-                        child: Text('Sin autorizar',
+                        child: Text(l.usbUnauthorized,
                             style: TextStyle(fontSize: 11, color: p.statusReconnecting)),
                       ),
                     ],
@@ -327,7 +331,7 @@ class _UsbDeviceCard extends StatelessWidget {
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
                 textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
               ),
-              child: const Text('Activar WiFi ADB'),
+              child: Text(l.usbActivateWifi),
             ),
           ),
         ],
@@ -347,6 +351,7 @@ class _TcpDeviceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
     final p = AppPalette.of(context);
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
@@ -390,7 +395,7 @@ class _TcpDeviceCard extends StatelessWidget {
                         borderRadius: BorderRadius.circular(4),
                         border: Border.all(color: p.statusConnected.withValues(alpha: 0.3)),
                       ),
-                      child: Text('Conectado',
+                      child: Text(l.statusConnected,
                           style: TextStyle(fontSize: 11, color: p.statusConnected, fontWeight: FontWeight.w500)),
                     ),
                   ]),
@@ -418,14 +423,14 @@ class _TcpDeviceCard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(6),
                       border: Border.all(color: p.borderColor),
                     ),
-                    child: Text('Ya guardado',
+                    child: Text(l.usbAlreadySaved,
                         style: TextStyle(fontSize: 12, color: p.textDisabled, fontWeight: FontWeight.w500)),
                   )
                 : ElevatedButton.icon(
                     key: ValueKey('save_wifi_${device.serial}'),
                     onPressed: onSave,
                     icon: const Icon(Icons.bookmark_add_outlined, size: 13),
-                    label: const Text('Guardar dispositivo'),
+                    label: Text(l.usbSaveDevice),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: p.primaryBlue.withValues(alpha: 0.12),
                       foregroundColor: p.primaryBlue,
@@ -474,6 +479,7 @@ class _SaveWifiDialogState extends State<_SaveWifiDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
     final p = AppPalette.of(context);
     return Dialog(
       backgroundColor: p.surface,
@@ -486,7 +492,7 @@ class _SaveWifiDialogState extends State<_SaveWifiDialog> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Guardar dispositivo WiFi',
+              Text(l.usbSaveWifiTitle,
                   style: TextStyle(color: p.textPrimary, fontSize: 16, fontWeight: FontWeight.w700)),
               const SizedBox(height: 6),
               Text('${widget.host}:${widget.port}',
@@ -495,7 +501,7 @@ class _SaveWifiDialogState extends State<_SaveWifiDialog> {
                 Text('Android ${widget.device.androidVersion}',
                     style: TextStyle(color: p.textSecondary, fontSize: 12)),
               const SizedBox(height: 20),
-              Text('Nombre del dispositivo',
+              Text(l.usbSaveWifiNameLabel,
                   style: TextStyle(color: p.textSecondary, fontSize: 12, fontWeight: FontWeight.w500)),
               const SizedBox(height: 8),
               TextField(
@@ -518,7 +524,7 @@ class _SaveWifiDialogState extends State<_SaveWifiDialog> {
                 children: [
                   TextButton(
                     onPressed: () => Navigator.pop(context),
-                    child: Text('Cancelar', style: TextStyle(color: p.textSecondary)),
+                    child: Text(l.actionCancel, style: TextStyle(color: p.textSecondary)),
                   ),
                   const SizedBox(width: 8),
                   ElevatedButton(
@@ -533,7 +539,7 @@ class _SaveWifiDialogState extends State<_SaveWifiDialog> {
                       backgroundColor: p.primaryBlue,
                       foregroundColor: Colors.white,
                     ),
-                    child: const Text('Guardar'),
+                    child: Text(l.actionSave),
                   ),
                 ],
               ),
@@ -577,6 +583,7 @@ class _ActivateWifiDialogState extends State<_ActivateWifiDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
     final p = AppPalette.of(context);
     return Dialog(
       backgroundColor: p.surface,
@@ -589,13 +596,13 @@ class _ActivateWifiDialogState extends State<_ActivateWifiDialog> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Activar WiFi ADB',
+              Text(l.usbActivateWifiTitle,
                   style: TextStyle(color: p.textPrimary, fontSize: 16, fontWeight: FontWeight.w700)),
               const SizedBox(height: 6),
-              Text('Dispositivo: ${widget.device.model ?? widget.device.serial}',
+              Text(l.usbActivateWifiDevice(widget.device.model ?? widget.device.serial),
                   style: TextStyle(color: p.textSecondary, fontSize: 12)),
               const SizedBox(height: 20),
-              Text('Dirección IP del dispositivo',
+              Text(l.usbActivateWifiIpLabel,
                   style: TextStyle(color: p.textSecondary, fontSize: 12, fontWeight: FontWeight.w500)),
               const SizedBox(height: 8),
               Row(
@@ -644,7 +651,7 @@ class _ActivateWifiDialogState extends State<_ActivateWifiDialog> {
                 children: [
                   TextButton(
                     onPressed: () => Navigator.pop(context),
-                    child: Text('Cancelar', style: TextStyle(color: p.textSecondary)),
+                    child: Text(l.actionCancel, style: TextStyle(color: p.textSecondary)),
                   ),
                   const SizedBox(width: 8),
                   ElevatedButton(
@@ -660,7 +667,7 @@ class _ActivateWifiDialogState extends State<_ActivateWifiDialog> {
                       backgroundColor: p.primaryBlue,
                       foregroundColor: Colors.white,
                     ),
-                    child: const Text('Conectar y Guardar'),
+                    child: Text(l.usbActivateWifiConfirm),
                   ),
                 ],
               ),
@@ -679,6 +686,7 @@ class _EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
     final p = AppPalette.of(context);
     return Center(
       child: Column(
@@ -686,13 +694,13 @@ class _EmptyState extends StatelessWidget {
         children: [
           Icon(Icons.devices_other, size: 48, color: p.textDisabled),
           const SizedBox(height: 16),
-          Text('Sin dispositivos detectados',
+          Text(l.usbEmptyTitle,
               style: TextStyle(color: p.textPrimary, fontSize: 16, fontWeight: FontWeight.w600)),
           const SizedBox(height: 8),
-          Text('Conecta un dispositivo por USB o activa ADB WiFi',
+          Text(l.usbEmptySubtitle,
               style: TextStyle(color: p.textSecondary, fontSize: 13)),
           const SizedBox(height: 4),
-          Text('Se detecta automáticamente cada 5 segundos',
+          Text(l.usbEmptyHint,
               style: TextStyle(color: p.textDisabled, fontSize: 12)),
         ],
       ),

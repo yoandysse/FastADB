@@ -36,10 +36,16 @@ class AppLocalizationsEs extends AppLocalizations {
   String get actionCancel => 'Cancelar';
 
   @override
+  String get actionClose => 'Cerrar';
+
+  @override
   String get actionSave => 'Guardar';
 
   @override
   String get actionDelete => 'Eliminar';
+
+  @override
+  String get actionCreate => 'Crear';
 
   @override
   String get actionConnect => 'Conectar';
@@ -55,6 +61,18 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get actionBrowse => 'Explorar...';
+
+  @override
+  String get shortcutsRunning => 'Ejecutando...';
+
+  @override
+  String get shortcutsCompleted => 'Completado';
+
+  @override
+  String get shortcutsFailed => 'Error';
+
+  @override
+  String get shortcutsNoOutput => '(sin salida)';
 
   @override
   String get devicesTitle => 'Mis Dispositivos';
@@ -92,6 +110,16 @@ class AppLocalizationsEs extends AppLocalizations {
   String get devicesGlobalShortcuts => 'Accesos Rápidos Globales';
 
   @override
+  String get devicesShortcutHint =>
+      'Selecciona un dispositivo primero, o toca un acceso para elegir';
+
+  @override
+  String get devicesNoConnected => 'No hay dispositivos conectados';
+
+  @override
+  String get devicesSelectDevice => 'Selecciona el dispositivo';
+
+  @override
   String get devicesDeleteTitle => 'Eliminar dispositivo';
 
   @override
@@ -108,6 +136,17 @@ class AppLocalizationsEs extends AppLocalizations {
   String get usbTitle => 'Dispositivos Detectados';
 
   @override
+  String usbDeviceCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count dispositivos',
+      one: '1 dispositivo',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get usbRefresh => 'Actualiza cada 5s';
 
   @override
@@ -118,6 +157,9 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get usbWifiSubtitle => 'Conexiones ADB activas desde fuera de la app';
+
+  @override
+  String get usbUnknownDevice => 'Dispositivo desconocido';
 
   @override
   String get usbUnauthorized => 'Sin autorizar';
@@ -169,11 +211,73 @@ class AppLocalizationsEs extends AppLocalizations {
   String get shortcutsTitle => 'Accesos Rápidos';
 
   @override
+  String get shortcutsNew => 'Nuevo acceso';
+
+  @override
+  String get shortcutsSectionGlobal => 'Globales';
+
+  @override
+  String get shortcutsSectionDevice => 'Por dispositivo';
+
+  @override
+  String get shortcutsDeviceHint =>
+      'Usa %DEVICE% en el comando para reemplazarlo con el serial del dispositivo activo.';
+
+  @override
+  String get shortcutsDeleteTitle => 'Eliminar acceso rápido';
+
+  @override
+  String shortcutsDeleteConfirm(String name) {
+    return '¿Eliminar \"$name\"?';
+  }
+
+  @override
+  String get shortcutsCopyCmd => 'Copiar comando';
+
+  @override
+  String get shortcutsCreate => 'Crear acceso rápido';
+
+  @override
   String get shortcutsEmptyTitle => 'Sin accesos rápidos configurados';
 
   @override
   String get shortcutsEmptySubtitle =>
       'Crea comandos ADB rápidos para tus dispositivos';
+
+  @override
+  String get shortcutsModalCreateTitle => 'Nuevo acceso rápido';
+
+  @override
+  String get shortcutsModalEditTitle => 'Editar acceso rápido';
+
+  @override
+  String get shortcutsModalNameLabel => 'Nombre';
+
+  @override
+  String get shortcutsModalNameHint => 'ej. Abrir Shell';
+
+  @override
+  String get shortcutsModalNameRequired => 'El nombre es requerido';
+
+  @override
+  String get shortcutsModalCmdLabel => 'Comando';
+
+  @override
+  String get shortcutsModalCmdRequired => 'El comando es requerido';
+
+  @override
+  String get shortcutsModalCmdHint =>
+      'Usa %DEVICE% para el serial del dispositivo activo';
+
+  @override
+  String get shortcutsModalIconLabel => 'Ícono';
+
+  @override
+  String get shortcutsModalGlobalTitle => 'Global';
+
+  @override
+  String get shortcutsModalGlobalSubtitle =>
+      'Aparece en la barra de acciones de todos los dispositivos';
 
   @override
   String get settingsTitle => 'Configuración';
@@ -200,6 +304,9 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get settingsWindowsNote =>
       'Windows: visita github.com/Genymobile/scrcpy para instalar scrcpy. La app no incluye scrcpy internamente.';
+
+  @override
+  String get settingsAutoDetect => 'Auto-detectar';
 
   @override
   String settingsStatusDetected(String version) {
@@ -254,22 +361,22 @@ class AppLocalizationsEs extends AppLocalizations {
   String get settingsLanguageSection => 'Idioma';
 
   @override
-  String get settingsLangAuto => 'Automático';
+  String get settingsLangAuto => 'Sistema';
 
   @override
-  String get settingsLangAutoSub => 'Sigue el idioma del sistema';
+  String get settingsLangAutoSub => 'Idioma del SO';
 
   @override
   String get settingsLangEn => 'English';
 
   @override
-  String get settingsLangEnSub => 'Always in English';
+  String get settingsLangEnSub => 'Inglés';
 
   @override
   String get settingsLangEs => 'Español';
 
   @override
-  String get settingsLangEsSub => 'Siempre en español';
+  String get settingsLangEsSub => 'Español';
 
   @override
   String aboutVersion(String version) {

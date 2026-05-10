@@ -14,16 +14,14 @@ class StatusPill extends StatelessWidget {
     this.small = false,
   }) : super(key: key);
 
-  Color _getStatusColor() {
-    return switch (status) {
-      ConnectionStatus.connected => AppColors.statusConnected,
-      ConnectionStatus.reconnecting => AppColors.statusReconnecting,
-      ConnectionStatus.offline => AppColors.statusOffline,
-      ConnectionStatus.error => AppColors.statusError,
-    };
-  }
+  Color _color(AppPalette p) => switch (status) {
+    ConnectionStatus.connected => p.statusConnected,
+    ConnectionStatus.reconnecting => p.statusReconnecting,
+    ConnectionStatus.offline => p.statusOffline,
+    ConnectionStatus.error => p.statusError,
+  };
 
-  String _getStatusLabel() {
+  String _label() {
     if (label != null) return label!;
     return switch (status) {
       ConnectionStatus.connected => 'Connected',
@@ -35,8 +33,9 @@ class StatusPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = _getStatusColor();
-    final text = _getStatusLabel();
+    final p = AppPalette.of(context);
+    final color = _color(p);
+    final text = _label();
     final fontSize = small ? 11.0 : 12.0;
     final padding = small
         ? const EdgeInsets.symmetric(horizontal: 8, vertical: 4)

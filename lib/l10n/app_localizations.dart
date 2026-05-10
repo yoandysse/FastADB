@@ -152,6 +152,12 @@ abstract class AppLocalizations {
   /// **'Cancel'**
   String get actionCancel;
 
+  /// No description provided for @actionClose.
+  ///
+  /// In en, this message translates to:
+  /// **'Close'**
+  String get actionClose;
+
   /// No description provided for @actionSave.
   ///
   /// In en, this message translates to:
@@ -163,6 +169,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Delete'**
   String get actionDelete;
+
+  /// No description provided for @actionCreate.
+  ///
+  /// In en, this message translates to:
+  /// **'Create'**
+  String get actionCreate;
 
   /// No description provided for @actionConnect.
   ///
@@ -193,6 +205,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Browse...'**
   String get actionBrowse;
+
+  /// No description provided for @shortcutsRunning.
+  ///
+  /// In en, this message translates to:
+  /// **'Running...'**
+  String get shortcutsRunning;
+
+  /// No description provided for @shortcutsCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Completed'**
+  String get shortcutsCompleted;
+
+  /// No description provided for @shortcutsFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed'**
+  String get shortcutsFailed;
+
+  /// No description provided for @shortcutsNoOutput.
+  ///
+  /// In en, this message translates to:
+  /// **'(no output)'**
+  String get shortcutsNoOutput;
 
   /// No description provided for @devicesTitle.
   ///
@@ -248,6 +284,24 @@ abstract class AppLocalizations {
   /// **'Global Quick Actions'**
   String get devicesGlobalShortcuts;
 
+  /// No description provided for @devicesShortcutHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Select a device first, or tap a shortcut to choose'**
+  String get devicesShortcutHint;
+
+  /// No description provided for @devicesNoConnected.
+  ///
+  /// In en, this message translates to:
+  /// **'No connected devices'**
+  String get devicesNoConnected;
+
+  /// No description provided for @devicesSelectDevice.
+  ///
+  /// In en, this message translates to:
+  /// **'Select a device'**
+  String get devicesSelectDevice;
+
   /// No description provided for @devicesDeleteTitle.
   ///
   /// In en, this message translates to:
@@ -272,6 +326,12 @@ abstract class AppLocalizations {
   /// **'Detected Devices'**
   String get usbTitle;
 
+  /// No description provided for @usbDeviceCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 device} other{{count} devices}}'**
+  String usbDeviceCount(int count);
+
   /// No description provided for @usbRefresh.
   ///
   /// In en, this message translates to:
@@ -295,6 +355,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Active ADB connections from outside the app'**
   String get usbWifiSubtitle;
+
+  /// No description provided for @usbUnknownDevice.
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown device'**
+  String get usbUnknownDevice;
 
   /// No description provided for @usbUnauthorized.
   ///
@@ -386,6 +452,54 @@ abstract class AppLocalizations {
   /// **'Quick Actions'**
   String get shortcutsTitle;
 
+  /// No description provided for @shortcutsNew.
+  ///
+  /// In en, this message translates to:
+  /// **'New action'**
+  String get shortcutsNew;
+
+  /// No description provided for @shortcutsSectionGlobal.
+  ///
+  /// In en, this message translates to:
+  /// **'Global'**
+  String get shortcutsSectionGlobal;
+
+  /// No description provided for @shortcutsSectionDevice.
+  ///
+  /// In en, this message translates to:
+  /// **'Per device'**
+  String get shortcutsSectionDevice;
+
+  /// No description provided for @shortcutsDeviceHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Use %DEVICE% in the command to replace it with the active device serial.'**
+  String get shortcutsDeviceHint;
+
+  /// No description provided for @shortcutsDeleteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete quick action'**
+  String get shortcutsDeleteTitle;
+
+  /// No description provided for @shortcutsDeleteConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete \"{name}\"?'**
+  String shortcutsDeleteConfirm(String name);
+
+  /// No description provided for @shortcutsCopyCmd.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy command'**
+  String get shortcutsCopyCmd;
+
+  /// No description provided for @shortcutsCreate.
+  ///
+  /// In en, this message translates to:
+  /// **'Create quick action'**
+  String get shortcutsCreate;
+
   /// No description provided for @shortcutsEmptyTitle.
   ///
   /// In en, this message translates to:
@@ -397,6 +511,72 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Create fast ADB commands for your devices'**
   String get shortcutsEmptySubtitle;
+
+  /// No description provided for @shortcutsModalCreateTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'New quick action'**
+  String get shortcutsModalCreateTitle;
+
+  /// No description provided for @shortcutsModalEditTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit quick action'**
+  String get shortcutsModalEditTitle;
+
+  /// No description provided for @shortcutsModalNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get shortcutsModalNameLabel;
+
+  /// No description provided for @shortcutsModalNameHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. Open Shell'**
+  String get shortcutsModalNameHint;
+
+  /// No description provided for @shortcutsModalNameRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Name is required'**
+  String get shortcutsModalNameRequired;
+
+  /// No description provided for @shortcutsModalCmdLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Command'**
+  String get shortcutsModalCmdLabel;
+
+  /// No description provided for @shortcutsModalCmdRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Command is required'**
+  String get shortcutsModalCmdRequired;
+
+  /// No description provided for @shortcutsModalCmdHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Use %DEVICE% for the active device serial'**
+  String get shortcutsModalCmdHint;
+
+  /// No description provided for @shortcutsModalIconLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Icon'**
+  String get shortcutsModalIconLabel;
+
+  /// No description provided for @shortcutsModalGlobalTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Global'**
+  String get shortcutsModalGlobalTitle;
+
+  /// No description provided for @shortcutsModalGlobalSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Appears in the action bar of all devices'**
+  String get shortcutsModalGlobalSubtitle;
 
   /// No description provided for @settingsTitle.
   ///
@@ -445,6 +625,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Windows: visit github.com/Genymobile/scrcpy to install scrcpy. The app does not include scrcpy internally.'**
   String get settingsWindowsNote;
+
+  /// No description provided for @settingsAutoDetect.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto-detect'**
+  String get settingsAutoDetect;
 
   /// No description provided for @settingsStatusDetected.
   ///
@@ -545,13 +731,13 @@ abstract class AppLocalizations {
   /// No description provided for @settingsLangAuto.
   ///
   /// In en, this message translates to:
-  /// **'Automatic'**
+  /// **'System'**
   String get settingsLangAuto;
 
   /// No description provided for @settingsLangAutoSub.
   ///
   /// In en, this message translates to:
-  /// **'Follow system language'**
+  /// **'Follows OS language'**
   String get settingsLangAutoSub;
 
   /// No description provided for @settingsLangEn.
@@ -563,7 +749,7 @@ abstract class AppLocalizations {
   /// No description provided for @settingsLangEnSub.
   ///
   /// In en, this message translates to:
-  /// **'Always in English'**
+  /// **'English'**
   String get settingsLangEnSub;
 
   /// No description provided for @settingsLangEs.
@@ -575,7 +761,7 @@ abstract class AppLocalizations {
   /// No description provided for @settingsLangEsSub.
   ///
   /// In en, this message translates to:
-  /// **'Siempre en español'**
+  /// **'Spanish'**
   String get settingsLangEsSub;
 
   /// No description provided for @aboutVersion.

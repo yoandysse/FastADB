@@ -12,13 +12,20 @@
   "statusError": "Sin red",
 
   "actionCancel": "Cancelar",
+  "actionClose": "Cerrar",
   "actionSave": "Guardar",
   "actionDelete": "Eliminar",
+  "actionCreate": "Crear",
   "actionConnect": "Conectar",
   "actionDisconnect": "Desconectar",
   "actionEdit": "Editar",
   "actionVerify": "Verificar",
   "actionBrowse": "Explorar...",
+
+  "shortcutsRunning": "Ejecutando...",
+  "shortcutsCompleted": "Completado",
+  "shortcutsFailed": "Error",
+  "shortcutsNoOutput": "(sin salida)",
 
   "devicesTitle": "Mis Dispositivos",
   "devicesCount": "{count, plural, =1{1 dispositivo} other{{count} dispositivos}}",
@@ -34,6 +41,9 @@
   "devicesEmptySubtitle": "Agrega un dispositivo WiFi para comenzar",
   "devicesAddDevice": "Agregar Dispositivo",
   "devicesGlobalShortcuts": "Accesos Rápidos Globales",
+  "devicesShortcutHint": "Selecciona un dispositivo primero, o toca un acceso para elegir",
+  "devicesNoConnected": "No hay dispositivos conectados",
+  "devicesSelectDevice": "Selecciona el dispositivo",
   "devicesDeleteTitle": "Eliminar dispositivo",
   "devicesDeleteConfirm": "¿Eliminar \"{alias}\"?",
   "@devicesDeleteConfirm": {
@@ -49,10 +59,17 @@
   },
 
   "usbTitle": "Dispositivos Detectados",
+  "usbDeviceCount": "{count, plural, =1{1 dispositivo} other{{count} dispositivos}}",
+  "@usbDeviceCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
   "usbRefresh": "Actualiza cada 5s",
   "usbSectionUsb": "USB",
   "usbSectionWifi": "WiFi / TCP-IP detectados",
   "usbWifiSubtitle": "Conexiones ADB activas desde fuera de la app",
+  "usbUnknownDevice": "Dispositivo desconocido",
   "usbUnauthorized": "Sin autorizar",
   "usbActivateWifi": "Activar WiFi ADB",
   "usbSaveDevice": "Guardar dispositivo",
@@ -74,8 +91,32 @@
   "usbSaveWifiNameLabel": "Nombre del dispositivo",
 
   "shortcutsTitle": "Accesos Rápidos",
+  "shortcutsNew": "Nuevo acceso",
+  "shortcutsSectionGlobal": "Globales",
+  "shortcutsSectionDevice": "Por dispositivo",
+  "shortcutsDeviceHint": "Usa %DEVICE% en el comando para reemplazarlo con el serial del dispositivo activo.",
+  "shortcutsDeleteTitle": "Eliminar acceso rápido",
+  "shortcutsDeleteConfirm": "¿Eliminar \"{name}\"?",
+  "@shortcutsDeleteConfirm": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "shortcutsCopyCmd": "Copiar comando",
+  "shortcutsCreate": "Crear acceso rápido",
   "shortcutsEmptyTitle": "Sin accesos rápidos configurados",
   "shortcutsEmptySubtitle": "Crea comandos ADB rápidos para tus dispositivos",
+  "shortcutsModalCreateTitle": "Nuevo acceso rápido",
+  "shortcutsModalEditTitle": "Editar acceso rápido",
+  "shortcutsModalNameLabel": "Nombre",
+  "shortcutsModalNameHint": "ej. Abrir Shell",
+  "shortcutsModalNameRequired": "El nombre es requerido",
+  "shortcutsModalCmdLabel": "Comando",
+  "shortcutsModalCmdRequired": "El comando es requerido",
+  "shortcutsModalCmdHint": "Usa %DEVICE% para el serial del dispositivo activo",
+  "shortcutsModalIconLabel": "Ícono",
+  "shortcutsModalGlobalTitle": "Global",
+  "shortcutsModalGlobalSubtitle": "Aparece en la barra de acciones de todos los dispositivos",
 
   "settingsTitle": "Configuración",
   "settingsToolsSection": "Herramientas Externas",
@@ -85,6 +126,7 @@
   "settingsScrcpyName": "scrcpy",
   "settingsScrcpySubtitle": "Espejo de pantalla Android",
   "settingsWindowsNote": "Windows: visita github.com/Genymobile/scrcpy para instalar scrcpy. La app no incluye scrcpy internamente.",
+  "settingsAutoDetect": "Auto-detectar",
   "settingsStatusDetected": "● Detectado · {version}",
   "@settingsStatusDetected": {
     "placeholders": {
@@ -106,12 +148,12 @@
   "settingsThemeLight": "Claro",
   "settingsThemeLightSub": "Siempre modo claro",
   "settingsLanguageSection": "Idioma",
-  "settingsLangAuto": "Automático",
-  "settingsLangAutoSub": "Sigue el idioma del sistema",
+  "settingsLangAuto": "Sistema",
+  "settingsLangAutoSub": "Idioma del SO",
   "settingsLangEn": "English",
-  "settingsLangEnSub": "Always in English",
+  "settingsLangEnSub": "Inglés",
   "settingsLangEs": "Español",
-  "settingsLangEsSub": "Siempre en español",
+  "settingsLangEsSub": "Español",
   "aboutVersion": "Versión {version}",
   "@aboutVersion": {
     "placeholders": {

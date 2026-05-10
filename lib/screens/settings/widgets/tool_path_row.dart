@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../shared/widgets/status_pill.dart';
-import '../../../shared/theme/app_colors.dart';
+import '../../../shared/theme/app_colors.dart'; // AppPalette
 import '../../../core/models/connection_status.dart';
 import '../../../core/services/tools_config_service.dart';
 
@@ -89,11 +89,12 @@ class _ToolPathRowState extends State<ToolPathRow> {
   Widget build(BuildContext context) {
     final status = _verifyResult?.success ?? false ? ConnectionStatus.connected : ConnectionStatus.offline;
 
+    final p = AppPalette.of(context);
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        border: Border.all(color: AppColors.borderColor),
+        color: p.surface,
+        border: Border.all(color: p.borderColor),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Column(
@@ -101,14 +102,14 @@ class _ToolPathRowState extends State<ToolPathRow> {
         children: [
           Row(
             children: [
-              Icon(_getIconData(), size: 20, color: AppColors.textPrimary),
+              Icon(_getIconData(), size: 20, color: p.textPrimary),
               const SizedBox(width: 12),
               Text(
                 widget.label,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary,
+                  color: p.textPrimary,
                 ),
               ),
               const Spacer(),

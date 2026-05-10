@@ -380,7 +380,7 @@ class _ToolRowState extends State<_ToolRow> {
   Future<void> _pickFile() async {
     setState(() => _picking = true);
     try {
-      final result = await FilePicker.platform.pickFiles(
+      final result = await FilePicker.pickFiles(
         type: FileType.any,
         dialogTitle: AppLocalizations.of(context)!.actionBrowse,
         allowMultiple: false,

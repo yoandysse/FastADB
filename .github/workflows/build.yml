@@ -91,13 +91,13 @@ jobs:
           mkdir -p dist
           VERSION="${GITHUB_REF_NAME}"
           if [[ "$VERSION" != v* ]]; then VERSION="dev-${GITHUB_SHA}"; fi
-          ditto -c -k --keepParent build/macos/Build/Products/Release/fastadb.app "dist/FastADB-$VERSION-macos.zip"
+          bash scripts/package_macos_dmg.sh build/macos/Build/Products/Release/FastADB.app "dist/FastADB-$VERSION-macos.dmg"
 
       - name: Upload macOS artifacts
         uses: actions/upload-artifact@v7
         with:
           name: fastadb-macos
-          path: dist/*.zip
+          path: dist/*.dmg
 
   build-linux:
     needs: validate

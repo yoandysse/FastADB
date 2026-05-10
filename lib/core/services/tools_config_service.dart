@@ -8,11 +8,7 @@ class ToolVerifyResult {
   final String? version;
   final String? error;
 
-  ToolVerifyResult({
-    required this.success,
-    this.version,
-    this.error,
-  });
+  ToolVerifyResult({required this.success, this.version, this.error});
 }
 
 class ToolsConfigService {
@@ -26,7 +22,7 @@ class ToolsConfigService {
   late SharedPreferences _prefs;
 
   ToolsConfigService({ProcessRunner? processRunner})
-      : _processRunner = processRunner ?? DefaultProcessRunner();
+    : _processRunner = processRunner ?? DefaultProcessRunner();
 
   Future<void> _init() async {
     _prefs = await SharedPreferences.getInstance();
@@ -152,7 +148,38 @@ class ToolsConfigService {
   Future<String?> autoDetectScrcpy() async {
     try {
       final platform = Platform.operatingSystem;
-      final command = platform == 'windows' ? ['where', 'scrcpy.exe'] : ['which', 'scrcpy'];
+      if (platform == 'macos') {
+        final commonPaths = [
+          '/opt/homebrew/bin/scrcpy',
+          '/usr/local/bin/scrcpy',
+          '/opt/local/bin/scrcpy',
+        ];
+
+        for (final path in commonPaths) {
+          if (File(path).existsSync()) {
+            return path;
+          }
+        }
+      }
+
+      if (platform == 'linux') {
+        final commonPaths = [
+          '/usr/bin/scrcpy',
+          '/usr/local/bin/scrcpy',
+          '/snap/bin/scrcpy',
+          '/var/lib/flatpak/exports/bin/scrcpy',
+        ];
+
+        for (final path in commonPaths) {
+          if (File(path).existsSync()) {
+            return path;
+          }
+        }
+      }
+
+      final command = platform == 'windows'
+          ? ['where', 'scrcpy.exe']
+          : ['which', 'scrcpy'];
 
       final result = await _processRunner.run(command);
       if (result.exitCode == 0) {
@@ -168,10 +195,7 @@ class ToolsConfigService {
   Future<ToolVerifyResult> verifyAdb(String path) async {
     try {
       if (!File(path).existsSync()) {
-        return ToolVerifyResult(
-          success: false,
-          error: 'File not found: $path',
-        );
+        return ToolVerifyResult(success: false, error: 'File not found: $path');
       }
 
       final result = await _processRunner.run([path, 'version']);
@@ -186,25 +210,16 @@ class ToolsConfigService {
       final output = result.stdout.toString();
       final versionLine = output.split('\n').first;
 
-      return ToolVerifyResult(
-        success: true,
-        version: versionLine,
-      );
+      return ToolVerifyResult(success: true, version: versionLine);
     } catch (e) {
-      return ToolVerifyResult(
-        success: false,
-        error: e.toString(),
-      );
+      return ToolVerifyResult(success: false, error: e.toString());
     }
   }
 
   Future<ToolVerifyResult> verifyScrcpy(String path) async {
     try {
       if (!File(path).existsSync()) {
-        return ToolVerifyResult(
-          success: false,
-          error: 'File not found: $path',
-        );
+        return ToolVerifyResult(success: false, error: 'File not found: $path');
       }
 
       final result = await _processRunner.run([path, '--version']);
@@ -219,15 +234,9 @@ class ToolsConfigService {
       final output = result.stdout.toString();
       final version = output.split('\n').first;
 
-      return ToolVerifyResult(
-        success: true,
-        version: version,
-      );
+      return ToolVerifyResult(success: true, version: version);
     } catch (e) {
-      return ToolVerifyResult(
-        success: false,
-        error: e.toString(),
-      );
+      return ToolVerifyResult(success: false, error: e.toString());
     }
   }
 }

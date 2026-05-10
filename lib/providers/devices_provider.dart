@@ -5,6 +5,7 @@ import '../core/models/device.dart';
 import '../core/models/connection_status.dart';
 import '../core/repositories/device_repository.dart';
 import '../core/services/adb_service.dart';
+import '../core/services/process_runner.dart';
 import 'tools_config_provider.dart';
 
 class DeviceState {
@@ -30,13 +31,15 @@ final deviceRepositoryProvider = Provider((ref) => DeviceRepository());
 /// recreation (which would wipe the device list from the UI on every config load).
 /// [DevicesNotifier] reads config on demand through [Ref] instead.
 final devicesProvider =
-    StateNotifierProvider<DevicesNotifier, AsyncValue<List<DeviceState>>>((ref) {
-  // ref.read (not ref.watch) — DeviceRepository is a stable singleton.
-  // Watching it would cause this notifier to be recreated on hot reload,
-  // resetting the device list before Hive finishes loading.
-  final repository = ref.read(deviceRepositoryProvider);
-  return DevicesNotifier(repository, ref);
-});
+    StateNotifierProvider<DevicesNotifier, AsyncValue<List<DeviceState>>>((
+      ref,
+    ) {
+      // ref.read (not ref.watch) — DeviceRepository is a stable singleton.
+      // Watching it would cause this notifier to be recreated on hot reload,
+      // resetting the device list before Hive finishes loading.
+      final repository = ref.read(deviceRepositoryProvider);
+      return DevicesNotifier(repository, ref);
+    });
 
 class DevicesNotifier extends StateNotifier<AsyncValue<List<DeviceState>>> {
   final DeviceRepository _repository;
@@ -47,7 +50,7 @@ class DevicesNotifier extends StateNotifier<AsyncValue<List<DeviceState>>> {
   String? _currentAdbPath;
 
   DevicesNotifier(this._repository, this._ref)
-      : super(const AsyncValue.loading()) {
+    : super(const AsyncValue.loading()) {
     _init();
   }
 
@@ -73,7 +76,9 @@ class DevicesNotifier extends StateNotifier<AsyncValue<List<DeviceState>>> {
 
   /// ADB serial for a device — for WiFi devices it's always host:port.
   String _effectiveSerial(Device device) {
-    if (device.serial != null && device.serial!.isNotEmpty) return device.serial!;
+    if (device.serial != null && device.serial!.isNotEmpty) {
+      return device.serial!;
+    }
     if (device.host != null) return '${device.host}:${device.port ?? 5555}';
     return '';
   }
@@ -94,7 +99,10 @@ class DevicesNotifier extends StateNotifier<AsyncValue<List<DeviceState>>> {
   Future<void> _loadDevices() async {
     final devices = _repository.getAll();
     _setState(
-        devices.map((d) => DeviceState(device: d, status: ConnectionStatus.offline)).toList());
+      devices
+          .map((d) => DeviceState(device: d, status: ConnectionStatus.offline))
+          .toList(),
+    );
 
     for (int i = 0; i < devices.length; i++) {
       final status = await _getDeviceStatus(devices[i]);
@@ -124,7 +132,10 @@ class DevicesNotifier extends StateNotifier<AsyncValue<List<DeviceState>>> {
   Future<void> addDevice(Device device) async {
     try {
       final newDevice = await _repository.create(device);
-      _setState([..._currentList, DeviceState(device: newDevice, status: ConnectionStatus.offline)]);
+      _setState([
+        ..._currentList,
+        DeviceState(device: newDevice, status: ConnectionStatus.offline),
+      ]);
     } catch (e) {
       state = AsyncValue.error(e, StackTrace.current);
     }
@@ -133,9 +144,11 @@ class DevicesNotifier extends StateNotifier<AsyncValue<List<DeviceState>>> {
   Future<void> updateDevice(Device device) async {
     try {
       await _repository.update(device);
-      _setState(_currentList.map((s) {
-        return s.device.id == device.id ? s.copyWith(device: device) : s;
-      }).toList());
+      _setState(
+        _currentList.map((s) {
+          return s.device.id == device.id ? s.copyWith(device: device) : s;
+        }).toList(),
+      );
     } catch (e) {
       state = AsyncValue.error(e, StackTrace.current);
     }
@@ -157,10 +170,9 @@ class DevicesNotifier extends StateNotifier<AsyncValue<List<DeviceState>>> {
       final result = await adb.connect(device.host ?? '', device.port ?? 5555);
       if (result.success) {
         final serial = '${device.host}:${device.port ?? 5555}';
-        await updateDevice(device.copyWith(
-          lastConnected: DateTime.now(),
-          serial: serial,
-        ));
+        await updateDevice(
+          device.copyWith(lastConnected: DateTime.now(), serial: serial),
+        );
         _setDeviceStatus(device.id, ConnectionStatus.connected);
       } else {
         _setDeviceStatus(device.id, ConnectionStatus.error);
@@ -179,9 +191,13 @@ class DevicesNotifier extends StateNotifier<AsyncValue<List<DeviceState>>> {
 
   Future<AdbResult?> runShortcut(Device device, String commandTemplate) async {
     final adb = _adb;
-    if (adb == null) return AdbResult(success: false, error: 'ADB not configured');
+    if (adb == null) {
+      return AdbResult(success: false, error: 'ADB not configured');
+    }
     final serial = _effectiveSerial(device);
-    if (serial.isEmpty) return AdbResult(success: false, error: 'No serial for device');
+    if (serial.isEmpty) {
+      return AdbResult(success: false, error: 'No serial for device');
+    }
     return adb.runShortcutCommand(commandTemplate, serial);
   }
 
@@ -196,21 +212,28 @@ class DevicesNotifier extends StateNotifier<AsyncValue<List<DeviceState>>> {
       await Process.start(
         config.scrcpyPath,
         ['-s', serial, '--window-title', device.alias],
+        environment: toolProcessEnvironment({
+          if (config.adbPath.isNotEmpty) 'ADB': config.adbPath,
+        }),
         mode: ProcessStartMode.detached,
       );
     } catch (_) {}
   }
 
   void _setDeviceStatus(String id, ConnectionStatus status) {
-    _setState(_currentList.map((s) {
-      return s.device.id == id ? s.copyWith(status: status) : s;
-    }).toList());
+    _setState(
+      _currentList.map((s) {
+        return s.device.id == id ? s.copyWith(status: status) : s;
+      }).toList(),
+    );
   }
 
   void startPolling() {
     _pollingTimer?.cancel();
-    _pollingTimer =
-        Timer.periodic(const Duration(seconds: 8), (_) => _refreshAllDevices());
+    _pollingTimer = Timer.periodic(
+      const Duration(seconds: 8),
+      (_) => _refreshAllDevices(),
+    );
   }
 
   void stopPolling() {

@@ -63,7 +63,11 @@ class _TopBar extends StatelessWidget {
         alignment: Alignment.centerLeft,
         child: Text(
           l.settingsTitle,
-          style: TextStyle(color: p.textPrimary, fontSize: 18, fontWeight: FontWeight.w700),
+          style: TextStyle(
+            color: p.textPrimary,
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+          ),
         ),
       ),
     );
@@ -108,7 +112,8 @@ class _SettingsBody extends StatelessWidget {
               final svc = await notifier.getService();
               return svc.verifyAdb(path);
             },
-            onPathChanged: (p) => notifier.saveConfig(config.copyWith(adbPath: p)),
+            onPathChanged: (p) =>
+                notifier.saveConfig(config.copyWith(adbPath: p)),
           ),
           const SizedBox(height: 16),
           _ToolRow(
@@ -120,7 +125,8 @@ class _SettingsBody extends StatelessWidget {
               final svc = await notifier.getService();
               return svc.verifyScrcpy(path);
             },
-            onPathChanged: (p) => notifier.saveConfig(config.copyWith(scrcpyPath: p)),
+            onPathChanged: (p) =>
+                notifier.saveConfig(config.copyWith(scrcpyPath: p)),
           ),
           const SizedBox(height: 8),
           Row(
@@ -143,14 +149,20 @@ class _SettingsBody extends StatelessWidget {
             title: l.settingsAutoReconnectTitle,
             subtitle: l.settingsAutoReconnectSubtitle,
             value: config.autoReconnectOnStart,
-            onChanged: (v) => notifier.saveConfig(config.copyWith(autoReconnectOnStart: v)),
+            onChanged: (v) =>
+                notifier.saveConfig(config.copyWith(autoReconnectOnStart: v)),
           ),
-          Container(height: 1, color: p.divider, margin: const EdgeInsets.symmetric(vertical: 12)),
+          Container(
+            height: 1,
+            color: p.divider,
+            margin: const EdgeInsets.symmetric(vertical: 12),
+          ),
           _ToggleRow(
             title: l.settingsStartMinimizedTitle,
             subtitle: l.settingsStartMinimizedSubtitle,
             value: config.startMinimized,
-            onChanged: (v) => notifier.saveConfig(config.copyWith(startMinimized: v)),
+            onChanged: (v) =>
+                notifier.saveConfig(config.copyWith(startMinimized: v)),
           ),
 
           const SizedBox(height: 32),
@@ -162,21 +174,24 @@ class _SettingsBody extends StatelessWidget {
                 label: l.settingsThemeSystem,
                 sublabel: l.settingsThemeSystemSub,
                 selected: config.theme == 'system',
-                onTap: () => notifier.saveConfig(config.copyWith(theme: 'system')),
+                onTap: () =>
+                    notifier.saveConfig(config.copyWith(theme: 'system')),
               ),
               const SizedBox(width: 12),
               _ThemeOption(
                 label: l.settingsThemeDark,
                 sublabel: l.settingsThemeDarkSub,
                 selected: config.theme == 'dark',
-                onTap: () => notifier.saveConfig(config.copyWith(theme: 'dark')),
+                onTap: () =>
+                    notifier.saveConfig(config.copyWith(theme: 'dark')),
               ),
               const SizedBox(width: 12),
               _ThemeOption(
                 label: l.settingsThemeLight,
                 sublabel: l.settingsThemeLightSub,
                 selected: config.theme == 'light',
-                onTap: () => notifier.saveConfig(config.copyWith(theme: 'light')),
+                onTap: () =>
+                    notifier.saveConfig(config.copyWith(theme: 'light')),
               ),
             ],
           ),
@@ -227,11 +242,19 @@ class _SettingsBody extends StatelessWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(AppInfo.name,
-                      style: TextStyle(color: p.textPrimary, fontSize: 14, fontWeight: FontWeight.w700)),
+                  Text(
+                    AppInfo.name,
+                    style: TextStyle(
+                      color: p.textPrimary,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
                   const SizedBox(height: 2),
-                  Text(l.aboutVersion(AppInfo.version),
-                      style: TextStyle(color: p.textSecondary, fontSize: 12)),
+                  Text(
+                    l.aboutVersion(AppInfo.version),
+                    style: TextStyle(color: p.textSecondary, fontSize: 12),
+                  ),
                 ],
               ),
             ],
@@ -257,7 +280,11 @@ class _SectionTitle extends StatelessWidget {
     final p = AppPalette.of(context);
     return Text(
       title,
-      style: TextStyle(color: p.textPrimary, fontSize: 15, fontWeight: FontWeight.w700),
+      style: TextStyle(
+        color: p.textPrimary,
+        fontSize: 15,
+        fontWeight: FontWeight.w700,
+      ),
     );
   }
 }
@@ -329,19 +356,36 @@ class _ToolRowState extends State<_ToolRow> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(widget.name,
-                        style: TextStyle(color: p.textPrimary, fontSize: 13, fontWeight: FontWeight.w600)),
-                    Text(widget.subtitle,
-                        style: TextStyle(color: p.textSecondary, fontSize: 11)),
+                    Text(
+                      widget.name,
+                      style: TextStyle(
+                        color: p.textPrimary,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    Text(
+                      widget.subtitle,
+                      style: TextStyle(color: p.textSecondary, fontSize: 11),
+                    ),
                   ],
                 ),
               ),
               if (verified)
-                _StatusTag(label: l.settingsStatusDetected(_result!.version ?? ''), color: p.statusConnected)
+                _StatusTag(
+                  label: l.settingsStatusDetected(_result!.version ?? ''),
+                  color: p.statusConnected,
+                )
               else if (failed)
-                _StatusTag(label: l.settingsStatusNotConfigured, color: p.statusError)
+                _StatusTag(
+                  label: l.settingsStatusNotConfigured,
+                  color: p.statusError,
+                )
               else if (hasPath)
-                _StatusTag(label: l.settingsStatusUnverified, color: p.statusReconnecting),
+                _StatusTag(
+                  label: l.settingsStatusUnverified,
+                  color: p.statusReconnecting,
+                ),
             ],
           ),
           const SizedBox(height: 12),
@@ -358,19 +402,44 @@ class _ToolRowState extends State<_ToolRow> {
                     filled: true,
                     fillColor: p.background,
                     isDense: true,
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: BorderSide(color: p.borderColor)),
-                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: BorderSide(color: p.borderColor)),
-                    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: BorderSide(color: p.primaryBlue)),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 9,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(6),
+                      borderSide: BorderSide(color: p.borderColor),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(6),
+                      borderSide: BorderSide(color: p.borderColor),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(6),
+                      borderSide: BorderSide(color: p.primaryBlue),
+                    ),
                   ),
                 ),
               ),
               const SizedBox(width: 8),
-              _SmallButton(label: l.actionBrowse, onTap: _pickFile, loading: _picking),
+              _SmallButton(
+                label: l.actionBrowse,
+                onTap: _pickFile,
+                loading: _picking,
+              ),
               const SizedBox(width: 4),
-              _AutoDetectButton(tooltip: l.settingsAutoDetect, onTap: _autoDetect, loading: _detecting),
+              _AutoDetectButton(
+                tooltip: l.settingsAutoDetect,
+                onTap: _autoDetect,
+                loading: _detecting,
+              ),
               const SizedBox(width: 6),
-              _SmallButton(label: l.actionVerify, onTap: hasPath ? _verify : null, loading: _verifying, primary: true),
+              _SmallButton(
+                label: l.actionVerify,
+                onTap: hasPath ? _verify : null,
+                loading: _verifying,
+                primary: true,
+              ),
             ],
           ),
         ],
@@ -392,29 +461,61 @@ class _ToolRowState extends State<_ToolRow> {
         widget.onPathChanged(path);
         await _verify();
       }
+    } catch (e) {
+      _showMessage('Could not open file picker: $e');
     } finally {
-      setState(() => _picking = false);
+      if (mounted) {
+        setState(() => _picking = false);
+      }
     }
   }
 
   Future<void> _autoDetect() async {
     setState(() => _detecting = true);
-    final path = await widget.onAutoDetect();
-    if (path != null) {
-      _controller.text = path;
-      widget.onPathChanged(path);
-      await _verify();
+    try {
+      final path = await widget.onAutoDetect();
+      if (path != null) {
+        _controller.text = path;
+        widget.onPathChanged(path);
+        await _verify();
+      } else {
+        _showMessage(
+          'Could not auto-detect ${widget.name}. Select the executable manually.',
+        );
+      }
+    } catch (e) {
+      _showMessage('Auto-detect failed: $e');
+    } finally {
+      if (mounted) {
+        setState(() => _detecting = false);
+      }
     }
-    setState(() => _detecting = false);
   }
 
   Future<void> _verify() async {
     setState(() => _verifying = true);
-    final result = await widget.onVerify(_controller.text);
-    setState(() {
-      _result = result;
-      _verifying = false;
-    });
+    try {
+      final result = await widget.onVerify(_controller.text);
+      setState(() {
+        _result = result;
+        _verifying = false;
+      });
+      if (!result.success && result.error != null) {
+        _showMessage(result.error!);
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _verifying = false);
+      }
+      _showMessage('Verification failed: $e');
+    }
+  }
+
+  void _showMessage(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), duration: const Duration(seconds: 4)),
+    );
   }
 }
 
@@ -440,7 +541,12 @@ class _SmallButton extends StatelessWidget {
   final bool loading;
   final bool primary;
 
-  const _SmallButton({required this.label, this.onTap, this.loading = false, this.primary = false});
+  const _SmallButton({
+    required this.label,
+    this.onTap,
+    this.loading = false,
+    this.primary = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -450,14 +556,22 @@ class _SmallButton extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
         decoration: BoxDecoration(
-          color: primary ? p.primaryBlue.withValues(alpha: 0.15) : p.surfaceHighlight,
+          color: primary
+              ? p.primaryBlue.withValues(alpha: 0.15)
+              : p.surfaceHighlight,
           borderRadius: BorderRadius.circular(6),
           border: Border.all(
-            color: primary ? p.primaryBlue.withValues(alpha: 0.4) : p.borderColor,
+            color: primary
+                ? p.primaryBlue.withValues(alpha: 0.4)
+                : p.borderColor,
           ),
         ),
         child: loading
-            ? const SizedBox(width: 12, height: 12, child: CircularProgressIndicator(strokeWidth: 1.5))
+            ? const SizedBox(
+                width: 12,
+                height: 12,
+                child: CircularProgressIndicator(strokeWidth: 1.5),
+              )
             : Text(
                 label,
                 style: TextStyle(
@@ -476,7 +590,11 @@ class _AutoDetectButton extends StatelessWidget {
   final VoidCallback onTap;
   final bool loading;
 
-  const _AutoDetectButton({required this.tooltip, required this.onTap, this.loading = false});
+  const _AutoDetectButton({
+    required this.tooltip,
+    required this.onTap,
+    this.loading = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -493,7 +611,11 @@ class _AutoDetectButton extends StatelessWidget {
             border: Border.all(color: p.borderColor),
           ),
           child: loading
-              ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 1.5))
+              ? const SizedBox(
+                  width: 14,
+                  height: 14,
+                  child: CircularProgressIndicator(strokeWidth: 1.5),
+                )
               : Icon(Icons.manage_search, size: 14, color: p.textSecondary),
         ),
       ),
@@ -523,9 +645,19 @@ class _ToggleRow extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(title, style: TextStyle(color: p.textPrimary, fontSize: 13, fontWeight: FontWeight.w500)),
+              Text(
+                title,
+                style: TextStyle(
+                  color: p.textPrimary,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
               const SizedBox(height: 2),
-              Text(subtitle, style: TextStyle(color: p.textSecondary, fontSize: 11)),
+              Text(
+                subtitle,
+                style: TextStyle(color: p.textSecondary, fontSize: 11),
+              ),
             ],
           ),
         ),
@@ -574,14 +706,19 @@ class _LanguageOption extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(label,
-                style: TextStyle(
-                  color: selected ? p.textPrimary : p.textSecondary,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                )),
+            Text(
+              label,
+              style: TextStyle(
+                color: selected ? p.textPrimary : p.textSecondary,
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
             const SizedBox(height: 2),
-            Text(sublabel, style: TextStyle(color: p.textSecondary, fontSize: 11)),
+            Text(
+              sublabel,
+              style: TextStyle(color: p.textSecondary, fontSize: 11),
+            ),
           ],
         ),
       ),
@@ -621,14 +758,19 @@ class _ThemeOption extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(label,
-                style: TextStyle(
-                  color: selected ? p.textPrimary : p.textSecondary,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                )),
+            Text(
+              label,
+              style: TextStyle(
+                color: selected ? p.textPrimary : p.textSecondary,
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
             const SizedBox(height: 2),
-            Text(sublabel, style: TextStyle(color: p.textSecondary, fontSize: 11)),
+            Text(
+              sublabel,
+              style: TextStyle(color: p.textSecondary, fontSize: 11),
+            ),
           ],
         ),
       ),

@@ -2,7 +2,7 @@
 
 A cross-platform Flutter desktop application to manage Android devices via ADB without the terminal.
 
-**Current Status:** MVP Beta (`0.1.0-beta.1`)
+**Current Status:** MVP Beta (`0.1.0-beta.2`)
 
 FastADB is currently distributed as a beta pre-release. Expect the core ADB workflows to work, but treat the app as an MVP while installation, packaging, and edge cases continue to stabilize.
 
@@ -12,11 +12,11 @@ Beta builds are published from GitHub Releases:
 
 - Open the repository **Releases** page.
 - Download the artifact for your OS:
-  - `FastADB-v0.1.0-beta.1-macos.zip`
-  - `FastADB-v0.1.0-beta.1-windows-x64.zip`
-  - `FastADB-v0.1.0-beta.1-linux-x64.tar.gz`
+  - `FastADB-v0.1.0-beta.2-macos.dmg`
+  - `FastADB-v0.1.0-beta.2-windows-x64.zip`
+  - `FastADB-v0.1.0-beta.2-linux-x64.tar.gz`
 
-The current beta builds are not code-signed or notarized. On macOS and Windows, the operating system may show a security warning the first time the app is opened.
+The macOS download is a drag-to-Applications DMG. The current beta builds are not code-signed or notarized, so macOS and Windows may show a security warning the first time the app is opened.
 
 ## Features Implemented
 
@@ -156,7 +156,7 @@ MAJOR.MINOR.PATCH-prerelease+build
 Current app version:
 
 ```yaml
-version: 0.1.0-beta.1+1
+version: 0.1.0-beta.2+2
 ```
 
 Release tag format:
@@ -181,7 +181,7 @@ flutter build macos --release
 Publish a beta release:
 
 ```bash
-git tag v0.1.0-beta.1
+git tag v0.1.0-beta.2
 git push origin main --tags
 ```
 

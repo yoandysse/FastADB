@@ -1,5 +1,30 @@
 import 'dart:io';
 
+const _toolPathEntries = [
+  '/opt/homebrew/bin',
+  '/usr/local/bin',
+  '/opt/local/bin',
+  '/usr/bin',
+  '/bin',
+  '/usr/sbin',
+  '/sbin',
+];
+
+Map<String, String> toolProcessEnvironment([Map<String, String>? environment]) {
+  if (Platform.isWindows) {
+    return {...Platform.environment, if (environment != null) ...environment};
+  }
+
+  final merged = {
+    ...Platform.environment,
+    if (environment != null) ...environment,
+  };
+  final path = merged['PATH'] ?? '';
+  final entries = [..._toolPathEntries, if (path.isNotEmpty) path];
+  merged['PATH'] = entries.join(':');
+  return merged;
+}
+
 abstract class ProcessRunner {
   /// Execute a command and return the result.
   /// This is a blocking call that waits for the process to complete.
@@ -40,7 +65,7 @@ class DefaultProcessRunner implements ProcessRunner {
         executable,
         arguments,
         workingDirectory: workingDirectory,
-        environment: environment,
+        environment: toolProcessEnvironment(environment),
         runInShell: runInShell,
       );
     } catch (e) {
@@ -67,7 +92,7 @@ class DefaultProcessRunner implements ProcessRunner {
         executable,
         arguments,
         workingDirectory: workingDirectory,
-        environment: environment,
+        environment: toolProcessEnvironment(environment),
         runInShell: runInShell,
       );
     } catch (e) {

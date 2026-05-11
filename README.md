@@ -2,7 +2,7 @@
 
 A cross-platform Flutter desktop application to manage Android devices via ADB without the terminal.
 
-**Current Status:** MVP Beta (`0.1.0-beta.2`)
+**Current Status:** MVP Beta (`0.1.0-beta.3`)
 
 FastADB is currently distributed as a beta pre-release. Expect the core ADB workflows to work, but treat the app as an MVP while installation, packaging, and edge cases continue to stabilize.
 
@@ -12,9 +12,9 @@ Beta builds are published from GitHub Releases:
 
 - Open the repository **Releases** page.
 - Download the artifact for your OS:
-  - `FastADB-v0.1.0-beta.2-macos.dmg`
-  - `FastADB-v0.1.0-beta.2-windows-x64.zip`
-  - `FastADB-v0.1.0-beta.2-linux-x64.tar.gz`
+  - `FastADB-v0.1.0-beta.3-macos.dmg`
+  - `FastADB-v0.1.0-beta.3-windows-x64.zip`
+  - `FastADB-v0.1.0-beta.3-linux-x64.tar.gz`
 
 The macOS download is a drag-to-Applications DMG. The current beta builds are not code-signed or notarized, so macOS and Windows may show a security warning the first time the app is opened.
 
@@ -42,6 +42,12 @@ The macOS download is a drag-to-Applications DMG. The current beta builds are no
 - Auto-reconnect support for marked devices
 - Device information display (model, Android version)
 
+### Current Beta Integrations ⚠️
+- scrcpy launches from device cards when configured
+- Basic shortcuts CRUD with predefined commands
+- `%DEVICE%` placeholder replacement for shortcut execution
+- macOS drag-to-Applications DMG packaging
+
 ## Architecture
 
 The project follows a **layered architecture**:
@@ -67,7 +73,70 @@ Infrastructure Layer  → Repositories, ProcessRunner abstraction
 - Flutter >= 3.22
 - Dart 3.x
 - ADB installed and in PATH (or configured via Settings)
-- scrcpy installed (optional, for screen mirroring in Phase 4)
+- scrcpy installed (optional, for screen mirroring)
+
+## Install ADB and scrcpy
+
+FastADB does not bundle ADB or scrcpy. Install them with your OS package manager, then configure their paths in **Settings** if auto-detection does not find them.
+
+### macOS
+
+Recommended with Homebrew:
+
+```bash
+brew install android-platform-tools scrcpy
+```
+
+Common paths:
+
+- Apple Silicon Homebrew: `/opt/homebrew/bin/adb`, `/opt/homebrew/bin/scrcpy`
+- Intel Homebrew: `/usr/local/bin/adb`, `/usr/local/bin/scrcpy`
+
+Unsigned beta builds may need approval in **System Settings > Privacy & Security** the first time they are opened.
+
+### Windows
+
+ADB:
+
+- Install Android Studio, or download Android SDK Platform-Tools from Google.
+- Common Android Studio path: `%LOCALAPPDATA%\Android\Sdk\platform-tools\adb.exe`
+- If using the standalone Platform-Tools ZIP, extract it into a stable folder and select `adb.exe` from FastADB Settings.
+
+scrcpy:
+
+- Download the Windows release from Genymobile scrcpy releases.
+- Extract it into a stable folder and select `scrcpy.exe` from FastADB Settings.
+
+Unsigned beta builds may show a SmartScreen warning on first launch.
+
+### Linux
+
+Debian/Ubuntu:
+
+```bash
+sudo apt update
+sudo apt install adb scrcpy
+```
+
+Fedora:
+
+```bash
+sudo dnf install android-tools scrcpy
+```
+
+Arch:
+
+```bash
+sudo pacman -S android-tools scrcpy
+```
+
+If USB devices appear as unauthorized or permission denied:
+
+```bash
+sudo usermod -aG plugdev "$USER"
+```
+
+Then install Android udev rules for your distro, log out and back in, reconnect the device, and accept the USB debugging prompt on the phone.
 
 ## Getting Started
 
@@ -119,12 +188,8 @@ flutter run -d linux
 lib/
 ├── core/
 │   ├── models/              # Device, Shortcut, ToolsConfig + Hive adapters
-│   ├── services/
-│   │   ├── adb_service.dart                 # ADB command wrapper
-│   │   ├── tools_config_service.dart        # Tool detection & verification
-│   │   └── process_runner.dart              # Command execution abstraction
-│   └── repositories/
-│       └── device_repository.dart           # Hive CRUD operations
+│   ├── services/            # ADB, tools config, process runner
+│   └── repositories/        # Hive CRUD for devices and shortcuts
 ├── providers/
 │   ├── devices_provider.dart                # WiFi devices + polling
 │   ├── tools_config_provider.dart           # Tools configuration
@@ -133,7 +198,7 @@ lib/
 │   ├── devices/                             # WiFi device management
 │   ├── usb/                                 # USB device detection
 │   ├── settings/                            # ADB/scrcpy configuration
-│   └── shortcuts/                           # Future: custom shortcuts
+│   └── shortcuts/                           # Shortcut CRUD
 ├── shared/
 │   ├── theme/                               # Colors and theme
 │   ├── widgets/                             # AppShell, StatusPill, etc.
@@ -156,7 +221,7 @@ MAJOR.MINOR.PATCH-prerelease+build
 Current app version:
 
 ```yaml
-version: 0.1.0-beta.2+2
+version: 0.1.0-beta.3+3
 ```
 
 Release tag format:
@@ -164,6 +229,7 @@ Release tag format:
 ```text
 v0.1.0-beta.1
 v0.1.0-beta.2
+v0.1.0-beta.3
 v0.1.1-beta.1
 v0.2.0-beta.1
 v1.0.0
@@ -178,10 +244,12 @@ flutter test
 flutter build macos --release
 ```
 
+After GitHub Actions publishes the artifacts, validate the downloaded builds with `docs/beta_0_1_validation.md` and add the result to `RELEASE_NOTES.md`.
+
 Publish a beta release:
 
 ```bash
-git tag v0.1.0-beta.2
+git tag v0.1.0-beta.3
 git push origin main --tags
 ```
 
@@ -217,6 +285,17 @@ class MockProcessRunner implements ProcessRunner {
 }
 ```
 
+### Marionette MCP
+
+FastADB includes Marionette automation for debug builds and a project-local MCP server configuration.
+
+- MCP server dependency: `marionette_mcp`
+- Cursor config: `.cursor/mcp.json`
+- VS Code/Copilot config: `.vscode/mcp.json`
+- Usage guide: `docs/marionette_mcp.md`
+
+Run the app in debug mode, copy the VM Service WebSocket URL, then use the Marionette MCP `connect` tool.
+
 ### Debugging
 
 ```bash
@@ -238,43 +317,36 @@ flutter pub global run devtools
 ### Windows
 - ADB path resolution: config → ANDROID_HOME → ANDROID_SDK_ROOT → LOCALAPPDATA → PATH
 - Requires: Visual Studio Build Tools or MinGW for compilation
-- Distribution: MSIX packaging (Phase 5)
+- Distribution: ZIP in beta; MSIX/installer planned
 
 ### macOS
 - Supports Intel and Apple Silicon (M1/M2)
 - Requires: Xcode Command Line Tools
-- Gatekeeper: Unsigned binaries may need sandboxing entitlements
-- Distribution: DMG creation (Phase 5)
+- Gatekeeper: unsigned beta builds may require manual approval
+- Distribution: drag-to-Applications DMG
 
 ### Linux
 - Requires: libc, libstdc++
 - USB permissions: May need `sudo usermod -aG plugdev $USER`
-- Distribution: AppImage with appimagebuild
+- Distribution: tar.gz in beta; AppImage/deb planned
 
 ## Known Limitations
 
-- ❌ No screen mirroring yet (Phase 4)
-- ❌ No custom shortcuts execution (Phase 4)
-- ❌ No integrated terminal output (Phase 4)
-- ⚠️ Limited error context messages (improvements in progress)
+- scrcpy is launched directly from the devices provider; a dedicated `ScrcpyService` is still pending.
+- Shortcuts are basic: device-specific assignment, `%APK%`, and long-running command handling are not complete yet.
+- Terminal output is not streamed in real time for long-running commands such as `logcat`.
+- System tray, close-to-tray, and start-minimized behavior are not integrated yet.
+- macOS has a DMG, but builds are not signed or notarized yet.
+- Windows and Linux artifacts are still ZIP/tar.gz, not native installers.
 
-## Next Phases
+## Roadmap
 
-**Phase 4: scrcpy & Shortcuts** (3-4 days)
-- Screen mirroring integration
-- Custom shortcut builder and execution
-- Terminal output streaming widget
-- Predefined shortcuts (Logcat, Screenshot, etc.)
-
-**Phase 5: Distribution** (4-5 days)
-- Windows MSIX packaging and installer
-- macOS DMG creation
-- Linux AppImage bundling
-- Automated release pipeline
+See [`ROADMAP.md`](ROADMAP.md) for the active release plan from beta to `1.0.0`.
 
 ## Project Resources
 
-- **Technical Guide**: `FastADB_Dev_Guide.md` (comprehensive architecture, services, 5-phase plan)
+- **Roadmap**: `ROADMAP.md`
+- **Technical Guide**: `FastADB_Dev_Guide.md`
 - **Implementation Plan**: `FastADB_Plan_Implementacion.docx` (detailed requirements)
 - **UI Design**: `desing.pen` (Pencil/Figma mockups)
 
@@ -284,4 +356,4 @@ MIT - See LICENSE file
 
 ---
 
-**FastADB MVP Beta 0.1.0** — Built with Flutter 3.x, Riverpod, Hive, go_router
+**FastADB MVP Beta 0.1.0-beta.3** - Built with Flutter 3.x, Riverpod, Hive, go_router

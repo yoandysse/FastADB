@@ -32,17 +32,26 @@ class DevicesScreen extends ConsumerWidget {
             ),
             onAdd: () => _showAddModal(context, ref),
           ),
-          Builder(builder: (context) {
-            final p = AppPalette.of(context);
-            return Container(height: 1, color: p.divider);
-          }),
+          Builder(
+            builder: (context) {
+              final p = AppPalette.of(context);
+              return Container(height: 1, color: p.divider);
+            },
+          ),
           Expanded(
             child: devicesAsync.when(
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (e, _) => Builder(builder: (context) {
-                final p = AppPalette.of(context);
-                return Center(child: Text('Error: $e', style: TextStyle(color: p.textSecondary)));
-              }),
+              error: (e, _) => Builder(
+                builder: (context) {
+                  final p = AppPalette.of(context);
+                  return Center(
+                    child: Text(
+                      'Error: $e',
+                      style: TextStyle(color: p.textSecondary),
+                    ),
+                  );
+                },
+              ),
               data: (states) => _DeviceList(
                 states: states,
                 notifier: notifier,
@@ -59,7 +68,8 @@ class DevicesScreen extends ConsumerWidget {
     showDialog(
       context: context,
       builder: (_) => AddDeviceModal(
-        onSave: (device) => ref.read(devicesProvider.notifier).addDevice(device),
+        onSave: (device) =>
+            ref.read(devicesProvider.notifier).addDevice(device),
       ),
     );
   }
@@ -83,7 +93,11 @@ class _TopBar extends StatelessWidget {
         children: [
           Text(
             l.devicesTitle,
-            style: TextStyle(color: p.textPrimary, fontSize: 18, fontWeight: FontWeight.w700),
+            style: TextStyle(
+              color: p.textPrimary,
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+            ),
           ),
           const SizedBox(width: 10),
           Container(
@@ -142,7 +156,9 @@ class _DeviceListState extends ConsumerState<_DeviceList> {
   }
 
   void _toggleSelection(String deviceId) {
-    setState(() => _selectedDeviceId = _selectedDeviceId == deviceId ? null : deviceId);
+    setState(
+      () => _selectedDeviceId = _selectedDeviceId == deviceId ? null : deviceId,
+    );
   }
 
   @override
@@ -155,13 +171,16 @@ class _DeviceListState extends ConsumerState<_DeviceList> {
       _selectedDeviceId = null;
     }
 
-    final wifiDevices = widget.states.where((s) => s.device.type == ConnectionType.wifi).toList();
-    final usbDevices = widget.states.where((s) => s.device.type == ConnectionType.usb).toList();
+    final wifiDevices = widget.states
+        .where((s) => s.device.type == ConnectionType.wifi)
+        .toList();
+    final usbDevices = widget.states
+        .where((s) => s.device.type == ConnectionType.usb)
+        .toList();
 
-    final scrcpyPath = ref.watch(toolsConfigProvider).maybeWhen(
-      data: (c) => c.scrcpyPath,
-      orElse: () => '',
-    );
+    final scrcpyPath = ref
+        .watch(toolsConfigProvider)
+        .maybeWhen(data: (c) => c.scrcpyPath, orElse: () => '');
     final hasScrcpy = scrcpyPath.isNotEmpty;
 
     if (widget.states.isEmpty) {
@@ -174,31 +193,44 @@ class _DeviceListState extends ConsumerState<_DeviceList> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (wifiDevices.isNotEmpty) ...[
-            _SectionLabel(label: l.devicesSectionWifi, count: wifiDevices.length),
+            _SectionLabel(
+              label: l.devicesSectionWifi,
+              count: wifiDevices.length,
+            ),
             const SizedBox(height: 10),
-            ...wifiDevices.map((s) => _DeviceCard(
-              state: s,
-              isSelected: s.device.id == _selectedDeviceId,
-              onSelect: () => _toggleSelection(s.device.id),
-              onConnect: () => widget.notifier.connect(s.device),
-              onDisconnect: () => widget.notifier.disconnect(s.device),
-              onDelete: () => _confirmDelete(context, s.device, widget.notifier),
-              onScrcpy: hasScrcpy ? () => widget.notifier.launchScrcpy(s.device) : null,
-            )),
+            ...wifiDevices.map(
+              (s) => _DeviceCard(
+                state: s,
+                isSelected: s.device.id == _selectedDeviceId,
+                onSelect: () => _toggleSelection(s.device.id),
+                onConnect: () => _connect(context, s.device),
+                onDisconnect: () => widget.notifier.disconnect(s.device),
+                onDelete: () =>
+                    _confirmDelete(context, s.device, widget.notifier),
+                onScrcpy: hasScrcpy
+                    ? () => _launchScrcpy(context, s.device)
+                    : null,
+              ),
+            ),
           ],
           if (usbDevices.isNotEmpty) ...[
             const SizedBox(height: 24),
             _SectionLabel(label: l.devicesSectionUsb, count: usbDevices.length),
             const SizedBox(height: 10),
-            ...usbDevices.map((s) => _DeviceCard(
-              state: s,
-              isSelected: s.device.id == _selectedDeviceId,
-              onSelect: () => _toggleSelection(s.device.id),
-              onConnect: () => widget.notifier.connect(s.device),
-              onDisconnect: () => widget.notifier.disconnect(s.device),
-              onDelete: () => _confirmDelete(context, s.device, widget.notifier),
-              onScrcpy: hasScrcpy ? () => widget.notifier.launchScrcpy(s.device) : null,
-            )),
+            ...usbDevices.map(
+              (s) => _DeviceCard(
+                state: s,
+                isSelected: s.device.id == _selectedDeviceId,
+                onSelect: () => _toggleSelection(s.device.id),
+                onConnect: () => _connect(context, s.device),
+                onDisconnect: () => widget.notifier.disconnect(s.device),
+                onDelete: () =>
+                    _confirmDelete(context, s.device, widget.notifier),
+                onScrcpy: hasScrcpy
+                    ? () => _launchScrcpy(context, s.device)
+                    : null,
+              ),
+            ),
           ],
           const SizedBox(height: 24),
           _GlobalShortcuts(
@@ -211,17 +243,30 @@ class _DeviceListState extends ConsumerState<_DeviceList> {
     );
   }
 
-  void _confirmDelete(BuildContext context, Device device, DevicesNotifier notifier) {
+  void _confirmDelete(
+    BuildContext context,
+    Device device,
+    DevicesNotifier notifier,
+  ) {
     final l = AppLocalizations.of(context)!;
     final p = AppPalette.of(context);
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: p.surface,
-        title: Text(l.devicesDeleteTitle, style: TextStyle(color: p.textPrimary)),
-        content: Text(l.devicesDeleteConfirm(device.alias), style: TextStyle(color: p.textSecondary)),
+        title: Text(
+          l.devicesDeleteTitle,
+          style: TextStyle(color: p.textPrimary),
+        ),
+        content: Text(
+          l.devicesDeleteConfirm(device.alias),
+          style: TextStyle(color: p.textSecondary),
+        ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(l.actionCancel)),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(l.actionCancel),
+          ),
           TextButton(
             onPressed: () {
               notifier.deleteDevice(device.id);
@@ -231,6 +276,24 @@ class _DeviceListState extends ConsumerState<_DeviceList> {
           ),
         ],
       ),
+    );
+  }
+
+  Future<void> _connect(BuildContext context, Device device) async {
+    final result = await widget.notifier.connectWithResult(device);
+    if (!context.mounted || result.success) return;
+    _showError(context, result.error ?? 'Connection failed');
+  }
+
+  Future<void> _launchScrcpy(BuildContext context, Device device) async {
+    final result = await widget.notifier.launchScrcpy(device);
+    if (!context.mounted || result.success) return;
+    _showError(context, result.error ?? 'Failed to start scrcpy');
+  }
+
+  void _showError(BuildContext context, String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), duration: const Duration(seconds: 6)),
     );
   }
 }
@@ -258,8 +321,14 @@ class _SectionLabel extends StatelessWidget {
         const SizedBox(width: 8),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
-          decoration: BoxDecoration(color: p.surfaceHighlight, borderRadius: BorderRadius.circular(8)),
-          child: Text('$count', style: TextStyle(fontSize: 11, color: p.textSecondary)),
+          decoration: BoxDecoration(
+            color: p.surfaceHighlight,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Text(
+            '$count',
+            style: TextStyle(fontSize: 11, color: p.textSecondary),
+          ),
         ),
       ],
     );
@@ -314,95 +383,140 @@ class _DeviceCard extends StatelessWidget {
     return GestureDetector(
       onTap: onSelect,
       child: AnimatedContainer(
-      duration: const Duration(milliseconds: 150),
-      margin: const EdgeInsets.only(bottom: 8),
-      decoration: BoxDecoration(
-        color: isSelected ? p.primaryBlue.withValues(alpha: 0.06) : p.surface,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: isSelected ? p.primaryBlue : p.borderColor,
-          width: isSelected ? 1.5 : 1,
-        ),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 3,
-            height: 72,
-            decoration: BoxDecoration(
-              color: statusColor,
-              borderRadius: const BorderRadius.horizontal(left: Radius.circular(8)),
-            ),
+        duration: const Duration(milliseconds: 150),
+        margin: const EdgeInsets.only(bottom: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? p.primaryBlue.withValues(alpha: 0.06) : p.surface,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: isSelected ? p.primaryBlue : p.borderColor,
+            width: isSelected ? 1.5 : 1,
           ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Container(width: 8, height: 8, decoration: BoxDecoration(color: statusColor, shape: BoxShape.circle)),
-                      const SizedBox(width: 8),
-                      Text(state.device.alias, style: TextStyle(color: p.textPrimary, fontSize: 14, fontWeight: FontWeight.w600)),
-                      const SizedBox(width: 8),
-                      _StatusBadge(label: _statusLabel(context), color: statusColor),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      const SizedBox(width: 16),
-                      Text(
-                        state.device.serial ?? '${state.device.host}:${state.device.port}',
-                        style: TextStyle(color: p.textSecondary, fontSize: 12),
-                      ),
-                      if (state.device.lastConnected != null) ...[
-                        Text(' · ', style: TextStyle(color: p.textDisabled)),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 3,
+              height: 72,
+              decoration: BoxDecoration(
+                color: statusColor,
+                borderRadius: const BorderRadius.horizontal(
+                  left: Radius.circular(8),
+                ),
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          width: 8,
+                          height: 8,
+                          decoration: BoxDecoration(
+                            color: statusColor,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
                         Text(
-                          l.devicesTimeAgo(_timeAgo(state.device.lastConnected!)),
-                          style: TextStyle(color: p.textSecondary, fontSize: 12),
+                          state.device.alias,
+                          style: TextStyle(
+                            color: p.textPrimary,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        _StatusBadge(
+                          label: _statusLabel(context),
+                          color: statusColor,
                         ),
                       ],
-                    ],
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        const SizedBox(width: 16),
+                        Text(
+                          state.device.serial ??
+                              '${state.device.host}:${state.device.port}',
+                          style: TextStyle(
+                            color: p.textSecondary,
+                            fontSize: 12,
+                          ),
+                        ),
+                        if (state.device.lastConnected != null) ...[
+                          Text(' · ', style: TextStyle(color: p.textDisabled)),
+                          Text(
+                            l.devicesTimeAgo(
+                              _timeAgo(state.device.lastConnected!),
+                            ),
+                            style: TextStyle(
+                              color: p.textSecondary,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Row(
+                children: [
+                  if (isConnected && onScrcpy != null) ...[
+                    _ActionButton(
+                      label: 'scrcpy',
+                      color: p.accent,
+                      icon: Icons.cast,
+                      onTap: onScrcpy!,
+                    ),
+                    const SizedBox(width: 8),
+                  ],
+                  if (isConnected)
+                    _ActionButton(
+                      label: l.actionDisconnect,
+                      color: p.statusError,
+                      onTap: onDisconnect,
+                    )
+                  else
+                    _ActionButton(
+                      label: l.actionConnect,
+                      color: p.statusConnected,
+                      onTap: onConnect,
+                    ),
+                  const SizedBox(width: 8),
+                  GestureDetector(
+                    onTap: onDelete,
+                    child: Tooltip(
+                      message: l.actionDelete,
+                      child: Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: p.statusError.withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Icon(
+                          Icons.delete_outline,
+                          size: 16,
+                          color: p.statusError,
+                        ),
+                      ),
+                    ),
                   ),
                 ],
               ),
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(
-              children: [
-                if (isConnected && onScrcpy != null) ...[
-                  _ActionButton(label: 'scrcpy', color: p.accent, icon: Icons.cast, onTap: onScrcpy!),
-                  const SizedBox(width: 8),
-                ],
-                if (isConnected)
-                  _ActionButton(label: l.actionDisconnect, color: p.statusError, onTap: onDisconnect)
-                else
-                  _ActionButton(label: l.actionConnect, color: p.statusConnected, onTap: onConnect),
-                const SizedBox(width: 8),
-                GestureDetector(
-                  onTap: onDelete,
-                  child: Tooltip(
-                    message: l.actionDelete,
-                    child: Container(
-                      padding: const EdgeInsets.all(6),
-                      decoration: BoxDecoration(
-                        color: p.statusError.withValues(alpha: 0.08),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Icon(Icons.delete_outline, size: 16, color: p.statusError),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+          ],
+        ),
       ), // AnimatedContainer
     ); // GestureDetector
   }
@@ -430,7 +544,14 @@ class _StatusBadge extends StatelessWidget {
         borderRadius: BorderRadius.circular(4),
         border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
-      child: Text(label, style: TextStyle(fontSize: 11, color: color, fontWeight: FontWeight.w500)),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 11,
+          color: color,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
     );
   }
 }
@@ -441,7 +562,12 @@ class _ActionButton extends StatelessWidget {
   final VoidCallback onTap;
   final IconData? icon;
 
-  const _ActionButton({required this.label, required this.color, required this.onTap, this.icon});
+  const _ActionButton({
+    required this.label,
+    required this.color,
+    required this.onTap,
+    this.icon,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -457,8 +583,18 @@ class _ActionButton extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            if (icon != null) ...[Icon(icon, size: 13, color: color), const SizedBox(width: 5)],
-            Text(label, style: TextStyle(fontSize: 12, color: color, fontWeight: FontWeight.w500)),
+            if (icon != null) ...[
+              Icon(icon, size: 13, color: color),
+              const SizedBox(width: 5),
+            ],
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                color: color,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
           ],
         ),
       ),
@@ -513,20 +649,26 @@ class _ShortcutRunDialogState extends State<_ShortcutRunDialog> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Header
-              Row(children: [
-                Icon(Icons.bolt, size: 16, color: p.accent),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    widget.shortcut.name,
-                    style: TextStyle(color: p.textPrimary, fontSize: 15, fontWeight: FontWeight.w700),
+              Row(
+                children: [
+                  Icon(Icons.bolt, size: 16, color: p.accent),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      widget.shortcut.name,
+                      style: TextStyle(
+                        color: p.textPrimary,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
                   ),
-                ),
-                GestureDetector(
-                  onTap: () => Navigator.pop(context),
-                  child: Icon(Icons.close, size: 18, color: p.textSecondary),
-                ),
-              ]),
+                  GestureDetector(
+                    onTap: () => Navigator.pop(context),
+                    child: Icon(Icons.close, size: 18, color: p.textSecondary),
+                  ),
+                ],
+              ),
               const SizedBox(height: 4),
               Text(
                 widget.deviceAlias,
@@ -537,7 +679,10 @@ class _ShortcutRunDialogState extends State<_ShortcutRunDialog> {
               // Command preview
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
                 decoration: BoxDecoration(
                   color: p.background,
                   borderRadius: BorderRadius.circular(6),
@@ -563,7 +708,13 @@ class _ShortcutRunDialogState extends State<_ShortcutRunDialog> {
                           children: [
                             const CircularProgressIndicator(strokeWidth: 2),
                             const SizedBox(height: 12),
-                            Text(l.shortcutsRunning, style: TextStyle(color: p.textSecondary, fontSize: 13)),
+                            Text(
+                              l.shortcutsRunning,
+                              style: TextStyle(
+                                color: p.textSecondary,
+                                fontSize: 13,
+                              ),
+                            ),
                           ],
                         ),
                       )
@@ -575,8 +726,10 @@ class _ShortcutRunDialogState extends State<_ShortcutRunDialog> {
                 alignment: Alignment.centerRight,
                 child: TextButton(
                   onPressed: () => Navigator.pop(context),
-                  child: Text(isLoading ? l.actionCancel : l.actionClose,
-                      style: TextStyle(color: p.primaryBlue)),
+                  child: Text(
+                    isLoading ? l.actionCancel : l.actionClose,
+                    style: TextStyle(color: p.primaryBlue),
+                  ),
                 ),
               ),
             ],
@@ -604,22 +757,24 @@ class _OutputBody extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         // Status row
-        Row(children: [
-          Icon(
-            result.success ? Icons.check_circle_outline : Icons.error_outline,
-            size: 14,
-            color: result.success ? p.statusConnected : p.statusError,
-          ),
-          const SizedBox(width: 6),
-          Text(
-            result.success ? l.shortcutsCompleted : l.shortcutsFailed,
-            style: TextStyle(
+        Row(
+          children: [
+            Icon(
+              result.success ? Icons.check_circle_outline : Icons.error_outline,
+              size: 14,
               color: result.success ? p.statusConnected : p.statusError,
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
             ),
-          ),
-        ]),
+            const SizedBox(width: 6),
+            Text(
+              result.success ? l.shortcutsCompleted : l.shortcutsFailed,
+              style: TextStyle(
+                color: result.success ? p.statusConnected : p.statusError,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
 
         if (hasOutput || hasError) ...[
           const SizedBox(height: 10),
@@ -664,7 +819,10 @@ class _OutputBody extends StatelessWidget {
           ),
         ] else ...[
           const SizedBox(height: 10),
-          Text(l.shortcutsNoOutput, style: TextStyle(color: p.textDisabled, fontSize: 12)),
+          Text(
+            l.shortcutsNoOutput,
+            style: TextStyle(color: p.textDisabled, fontSize: 12),
+          ),
         ],
       ],
     );
@@ -689,10 +847,9 @@ class _GlobalShortcuts extends ConsumerWidget {
     final l = AppLocalizations.of(context)!;
     final p = AppPalette.of(context);
 
-    final globalShortcuts = ref.watch(shortcutsProvider).maybeWhen(
-      data: (s) => s,
-      orElse: () => <Shortcut>[],
-    );
+    final globalShortcuts = ref
+        .watch(shortcutsProvider)
+        .maybeWhen(data: (s) => s, orElse: () => <Shortcut>[]);
 
     if (globalShortcuts.isEmpty) return const SizedBox.shrink();
 
@@ -705,8 +862,14 @@ class _GlobalShortcuts extends ConsumerWidget {
       children: [
         Row(
           children: [
-            Text(l.navShortcuts,
-                style: TextStyle(color: p.textSecondary, fontSize: 12, fontWeight: FontWeight.w600)),
+            Text(
+              l.navShortcuts,
+              style: TextStyle(
+                color: p.textSecondary,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
             if (selectedDevice != null) ...[
               const SizedBox(width: 8),
               Container(
@@ -714,18 +877,27 @@ class _GlobalShortcuts extends ConsumerWidget {
                 decoration: BoxDecoration(
                   color: p.primaryBlue.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: p.primaryBlue.withValues(alpha: 0.3)),
+                  border: Border.all(
+                    color: p.primaryBlue.withValues(alpha: 0.3),
+                  ),
                 ),
                 child: Text(
                   selectedDevice!.alias,
-                  style: TextStyle(fontSize: 11, color: p.primaryBlue, fontWeight: FontWeight.w500),
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: p.primaryBlue,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
               ),
             ],
             const Spacer(),
             GestureDetector(
               onTap: () => context.go('/shortcuts'),
-              child: Text(l.actionEdit, style: TextStyle(color: p.primaryBlue, fontSize: 12)),
+              child: Text(
+                l.actionEdit,
+                style: TextStyle(color: p.primaryBlue, fontSize: 12),
+              ),
             ),
           ],
         ),
@@ -734,10 +906,12 @@ class _GlobalShortcuts extends ConsumerWidget {
           spacing: 8,
           runSpacing: 8,
           children: globalShortcuts
-              .map((s) => _ShortcutChip(
-                    shortcut: s,
-                    onTap: () => _handleTap(context, s, connected),
-                  ))
+              .map(
+                (s) => _ShortcutChip(
+                  shortcut: s,
+                  onTap: () => _handleTap(context, s, connected),
+                ),
+              )
               .toList(),
         ),
         if (selectedDevice == null && connected.length > 1)
@@ -836,7 +1010,10 @@ class _ShortcutChip extends StatelessWidget {
           children: [
             Icon(_icon(), size: 14, color: p.textSecondary),
             const SizedBox(width: 6),
-            Text(shortcut.name, style: TextStyle(fontSize: 12, color: p.textSecondary)),
+            Text(
+              shortcut.name,
+              style: TextStyle(fontSize: 12, color: p.textSecondary),
+            ),
           ],
         ),
       ),
@@ -874,26 +1051,37 @@ class _DevicePickerDialog extends StatelessWidget {
             children: [
               Text(
                 shortcut.name,
-                style: TextStyle(color: p.textPrimary, fontSize: 15, fontWeight: FontWeight.w700),
+                style: TextStyle(
+                  color: p.textPrimary,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
               const SizedBox(height: 4),
-              Text(l.devicesSelectDevice,
-                  style: TextStyle(color: p.textSecondary, fontSize: 12)),
+              Text(
+                l.devicesSelectDevice,
+                style: TextStyle(color: p.textSecondary, fontSize: 12),
+              ),
               const SizedBox(height: 16),
-              ...devices.map((ds) => GestureDetector(
-                    onTap: () {
-                      Navigator.pop(context);
-                      onSelect(ds.device);
-                    },
-                    child: Container(
-                      margin: const EdgeInsets.only(bottom: 8),
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                      decoration: BoxDecoration(
-                        color: p.surfaceHighlight,
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: p.borderColor),
-                      ),
-                      child: Row(children: [
+              ...devices.map(
+                (ds) => GestureDetector(
+                  onTap: () {
+                    Navigator.pop(context);
+                    onSelect(ds.device);
+                  },
+                  child: Container(
+                    margin: const EdgeInsets.only(bottom: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 12,
+                    ),
+                    decoration: BoxDecoration(
+                      color: p.surfaceHighlight,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: p.borderColor),
+                    ),
+                    child: Row(
+                      children: [
                         Container(
                           width: 8,
                           height: 8,
@@ -907,28 +1095,44 @@ class _DevicePickerDialog extends StatelessWidget {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(ds.device.alias,
-                                  style: TextStyle(
-                                      color: p.textPrimary,
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w600)),
                               Text(
-                                ds.device.serial ?? '${ds.device.host}:${ds.device.port}',
-                                style: TextStyle(color: p.textSecondary, fontSize: 11),
+                                ds.device.alias,
+                                style: TextStyle(
+                                  color: p.textPrimary,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              Text(
+                                ds.device.serial ??
+                                    '${ds.device.host}:${ds.device.port}',
+                                style: TextStyle(
+                                  color: p.textSecondary,
+                                  fontSize: 11,
+                                ),
                               ),
                             ],
                           ),
                         ),
-                        Icon(Icons.chevron_right, size: 16, color: p.textDisabled),
-                      ]),
+                        Icon(
+                          Icons.chevron_right,
+                          size: 16,
+                          color: p.textDisabled,
+                        ),
+                      ],
                     ),
-                  )),
+                  ),
+                ),
+              ),
               const SizedBox(height: 8),
               Align(
                 alignment: Alignment.centerRight,
                 child: TextButton(
                   onPressed: () => Navigator.pop(context),
-                  child: Text(l.actionCancel, style: TextStyle(color: p.textSecondary)),
+                  child: Text(
+                    l.actionCancel,
+                    style: TextStyle(color: p.textSecondary),
+                  ),
                 ),
               ),
             ],
@@ -956,16 +1160,28 @@ class _EmptyState extends StatelessWidget {
         children: [
           Icon(Icons.devices, size: 48, color: p.textDisabled),
           const SizedBox(height: 16),
-          Text(l.devicesEmptyTitle,
-              style: TextStyle(color: p.textPrimary, fontSize: 16, fontWeight: FontWeight.w600)),
+          Text(
+            l.devicesEmptyTitle,
+            style: TextStyle(
+              color: p.textPrimary,
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
           const SizedBox(height: 8),
-          Text(l.devicesEmptySubtitle, style: TextStyle(color: p.textSecondary, fontSize: 13)),
+          Text(
+            l.devicesEmptySubtitle,
+            style: TextStyle(color: p.textSecondary, fontSize: 13),
+          ),
           const SizedBox(height: 24),
           ElevatedButton.icon(
             onPressed: onAdd,
             icon: const Icon(Icons.add, size: 16),
             label: Text(l.devicesAddDevice),
-            style: ElevatedButton.styleFrom(backgroundColor: p.primaryBlue, foregroundColor: Colors.white),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: p.primaryBlue,
+              foregroundColor: Colors.white,
+            ),
           ),
         ],
       ),

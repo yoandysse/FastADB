@@ -6,6 +6,7 @@ import '../core/models/connection_status.dart';
 import '../core/repositories/device_repository.dart';
 import '../core/services/adb_service.dart';
 import '../core/services/process_runner.dart';
+import '../shared/utils/adb_output_parser.dart';
 import 'tools_config_provider.dart';
 
 class DeviceState {
@@ -122,7 +123,9 @@ class DevicesNotifier extends StateNotifier<AsyncValue<List<DeviceState>>> {
     try {
       final s = await adb.getDeviceState(serial);
       if (s == 'device') return ConnectionStatus.connected;
-      if (s == 'unauthorized') return ConnectionStatus.error;
+      if (s == 'unauthorized' || s == 'offline' || s == 'no permissions') {
+        return ConnectionStatus.error;
+      }
       return ConnectionStatus.offline;
     } catch (_) {
       return ConnectionStatus.error;
@@ -180,6 +183,32 @@ class DevicesNotifier extends StateNotifier<AsyncValue<List<DeviceState>>> {
     } catch (_) {}
   }
 
+  Future<AdbResult> connectWithResult(Device device) async {
+    final adb = _adb;
+    if (adb == null) {
+      return AdbResult(
+        success: false,
+        error: AdbOutputParser.adbNotFoundMessage,
+      );
+    }
+    try {
+      final result = await adb.connect(device.host ?? '', device.port ?? 5555);
+      if (result.success) {
+        final serial = '${device.host}:${device.port ?? 5555}';
+        await updateDevice(
+          device.copyWith(lastConnected: DateTime.now(), serial: serial),
+        );
+        _setDeviceStatus(device.id, ConnectionStatus.connected);
+      } else {
+        _setDeviceStatus(device.id, ConnectionStatus.error);
+      }
+      return result;
+    } catch (e) {
+      _setDeviceStatus(device.id, ConnectionStatus.error);
+      return AdbResult(success: false, error: e.toString());
+    }
+  }
+
   Future<void> disconnect(Device device) async {
     final adb = _adb;
     if (adb == null) return;
@@ -201,13 +230,20 @@ class DevicesNotifier extends StateNotifier<AsyncValue<List<DeviceState>>> {
     return adb.runShortcutCommand(commandTemplate, serial);
   }
 
-  Future<void> launchScrcpy(Device device) async {
+  Future<AdbResult> launchScrcpy(Device device) async {
     final config = _ref
         .read(toolsConfigProvider)
         .maybeWhen(data: (c) => c, orElse: () => null);
-    if (config == null || config.scrcpyPath.isEmpty) return;
+    if (config == null || config.scrcpyPath.isEmpty) {
+      return AdbResult(
+        success: false,
+        error: AdbOutputParser.scrcpyNotFoundMessage,
+      );
+    }
     final serial = _effectiveSerial(device);
-    if (serial.isEmpty) return;
+    if (serial.isEmpty) {
+      return AdbResult(success: false, error: 'No serial for device');
+    }
     try {
       await Process.start(
         config.scrcpyPath,
@@ -217,7 +253,18 @@ class DevicesNotifier extends StateNotifier<AsyncValue<List<DeviceState>>> {
         }),
         mode: ProcessStartMode.detached,
       );
-    } catch (_) {}
+      return AdbResult(success: true, message: 'scrcpy started');
+    } catch (e) {
+      return AdbResult(
+        success: false,
+        error:
+            AdbOutputParser.friendlyError(
+              e.toString(),
+              fallback: 'Failed to start scrcpy',
+            ) ??
+            'Failed to start scrcpy',
+      );
+    }
   }
 
   void _setDeviceStatus(String id, ConnectionStatus status) {

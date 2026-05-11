@@ -9,55 +9,95 @@ class AdbResult {
   final String? message;
   final String? error;
 
-  AdbResult({
-    required this.success,
-    this.message,
-    this.error,
-  });
+  AdbResult({required this.success, this.message, this.error});
 
   @override
-  String toString() => 'AdbResult(success: $success, message: $message, error: $error)';
+  String toString() =>
+      'AdbResult(success: $success, message: $message, error: $error)';
 }
 
 class AdbService {
   final String adbPath;
   final ProcessRunner _runner;
 
-  AdbService({
-    required this.adbPath,
-    ProcessRunner? runner,
-  }) : _runner = runner ?? DefaultProcessRunner();
+  AdbService({required this.adbPath, ProcessRunner? runner})
+    : _runner = runner ?? DefaultProcessRunner();
+
+  String _combinedOutput(ProcessResult result) {
+    final stdout = result.stdout?.toString().trim() ?? '';
+    final stderr = result.stderr?.toString().trim() ?? '';
+    if (stdout.isEmpty) return stderr;
+    if (stderr.isEmpty) return stdout;
+    return '$stdout\n$stderr';
+  }
+
+  String _friendlyProcessError(ProcessResult result, String fallback) {
+    return AdbOutputParser.friendlyError(
+          _combinedOutput(result),
+          fallback: fallback,
+        ) ??
+        fallback;
+  }
+
+  String _friendlyException(Object error, String fallback) {
+    if (error is ProcessException) {
+      return AdbOutputParser.friendlyError(
+            '${error.message}\n${error.executable}',
+            fallback: fallback,
+          ) ??
+          fallback;
+    }
+    return AdbOutputParser.friendlyError(
+          error.toString(),
+          fallback: fallback,
+        ) ??
+        fallback;
+  }
 
   /// Connect to a device via WiFi/TCP-IP
   Future<AdbResult> connect(String host, int port) async {
+    if (host.trim().isEmpty) {
+      return AdbResult(
+        success: false,
+        error: 'Device host is empty. Enter an IP address or hostname.',
+      );
+    }
+
     try {
       final result = await _runner.run([adbPath, 'connect', '$host:$port']);
+      final output = _combinedOutput(result);
 
       if (result.exitCode != 0) {
         return AdbResult(
           success: false,
-          error: result.stderr?.toString() ?? 'Connection failed',
+          error: _friendlyProcessError(result, 'Connection failed'),
         );
       }
 
-      final stdout = result.stdout.toString().toLowerCase();
+      final stdout = output.toLowerCase();
 
       if (stdout.contains('connected to')) {
         return AdbResult(success: true, message: 'Connected');
       } else if (stdout.contains('already connected')) {
         return AdbResult(success: true, message: 'Already connected');
       } else if (stdout.contains('unable to connect')) {
-        return AdbResult(success: false, error: 'Unable to connect to $host:$port');
-      } else if (stdout.contains('error')) {
         return AdbResult(
           success: false,
-          error: AdbOutputParser.extractError(stdout) ?? 'Connection error',
+          error: AdbOutputParser.friendlyError(output),
+        );
+      } else if (AdbOutputParser.hasError(output)) {
+        return AdbResult(
+          success: false,
+          error: AdbOutputParser.extractError(output) ?? 'Connection error',
         );
       }
 
       return AdbResult(success: true, message: 'Connected');
     } catch (e) {
-      return AdbResult(success: false, error: e.toString());
+      return AdbResult(
+        success: false,
+        error: _friendlyException(e, 'Connection failed'),
+      );
     }
   }
 
@@ -69,13 +109,16 @@ class AdbService {
       if (result.exitCode != 0) {
         return AdbResult(
           success: false,
-          error: result.stderr?.toString() ?? 'Disconnect failed',
+          error: _friendlyProcessError(result, 'Disconnect failed'),
         );
       }
 
       return AdbResult(success: true, message: 'Disconnected');
     } catch (e) {
-      return AdbResult(success: false, error: e.toString());
+      return AdbResult(
+        success: false,
+        error: _friendlyException(e, 'Disconnect failed'),
+      );
     }
   }
 
@@ -101,14 +144,17 @@ class AdbService {
       }
 
       final devices = <UsbDevice>[];
-      final parsed = AdbOutputParser.parseDevices(result.stdout.toString());
+      final parsed = AdbOutputParser.parseDevices(_combinedOutput(result));
 
       for (final (serial, state) in parsed) {
         ConnectionStatus status = ConnectionStatus.offline;
 
-        if (AdbOutputParser.isDeviceConnected(state)) {
+        final normalizedState = state.toLowerCase();
+        if (AdbOutputParser.isDeviceConnected(normalizedState)) {
           status = ConnectionStatus.connected;
-        } else if (state.toLowerCase() == 'unauthorized') {
+        } else if (normalizedState == 'unauthorized' ||
+            normalizedState == 'offline' ||
+            normalizedState == 'no permissions') {
           status = ConnectionStatus.error;
         }
 
@@ -130,6 +176,10 @@ class AdbService {
         return result.stdout.toString().trim();
       }
 
+      final output = _combinedOutput(result).toLowerCase();
+      if (output.contains('unauthorized')) return 'unauthorized';
+      if (output.contains('offline')) return 'offline';
+      if (output.contains('no permissions')) return 'no permissions';
       return 'offline';
     } catch (e) {
       return 'offline';
@@ -139,9 +189,14 @@ class AdbService {
   /// Get device model via `adb shell getprop`
   Future<String> getModel(String serial) async {
     try {
-      final result = await _runner.run(
-        [adbPath, '-s', serial, 'shell', 'getprop', 'ro.product.model'],
-      );
+      final result = await _runner.run([
+        adbPath,
+        '-s',
+        serial,
+        'shell',
+        'getprop',
+        'ro.product.model',
+      ]);
 
       if (result.exitCode == 0) {
         return result.stdout.toString().trim();
@@ -156,9 +211,14 @@ class AdbService {
   /// Get Android version via `adb shell getprop`
   Future<String> getAndroidVersion(String serial) async {
     try {
-      final result = await _runner.run(
-        [adbPath, '-s', serial, 'shell', 'getprop', 'ro.build.version.release'],
-      );
+      final result = await _runner.run([
+        adbPath,
+        '-s',
+        serial,
+        'shell',
+        'getprop',
+        'ro.build.version.release',
+      ]);
 
       if (result.exitCode == 0) {
         return result.stdout.toString().trim();
@@ -173,16 +233,30 @@ class AdbService {
   /// Enable TCP/IP mode (WiFi ADB) on a USB-connected device
   Future<AdbResult> enableTcpip(String serial, {int port = 5555}) async {
     try {
-      final result = await _runner.run([adbPath, '-s', serial, 'tcpip', '$port']);
+      final result = await _runner.run([
+        adbPath,
+        '-s',
+        serial,
+        'tcpip',
+        '$port',
+      ]);
 
       if (result.exitCode != 0) {
         return AdbResult(
           success: false,
-          error: result.stderr?.toString() ?? 'Failed to enable TCP/IP',
+          error: _friendlyProcessError(result, 'Failed to enable TCP/IP'),
         );
       }
 
-      final stdout = result.stdout.toString();
+      final stdout = _combinedOutput(result);
+
+      if (AdbOutputParser.hasError(stdout)) {
+        return AdbResult(
+          success: false,
+          error:
+              AdbOutputParser.extractError(stdout) ?? 'Failed to enable TCP/IP',
+        );
+      }
 
       if (stdout.contains('restarting') || stdout.contains('tcp')) {
         return AdbResult(success: true, message: 'TCP/IP enabled');
@@ -190,16 +264,24 @@ class AdbService {
 
       return AdbResult(success: true, message: 'TCP/IP enabled');
     } catch (e) {
-      return AdbResult(success: false, error: e.toString());
+      return AdbResult(
+        success: false,
+        error: _friendlyException(e, 'Failed to enable TCP/IP'),
+      );
     }
   }
 
   /// Get suggested IP address from device (via `adb shell ip route`)
   Future<String?> getSuggestedIp(String serial) async {
     try {
-      final result = await _runner.run(
-        [adbPath, '-s', serial, 'shell', 'ip', 'route'],
-      );
+      final result = await _runner.run([
+        adbPath,
+        '-s',
+        serial,
+        'shell',
+        'ip',
+        'route',
+      ]);
 
       if (result.exitCode == 0) {
         return AdbOutputParser.parseIpRoute(result.stdout.toString());
@@ -222,10 +304,13 @@ class AdbService {
 
       return AdbResult(
         success: false,
-        error: result.stderr?.toString() ?? 'Failed to start server',
+        error: _friendlyProcessError(result, 'Failed to start server'),
       );
     } catch (e) {
-      return AdbResult(success: false, error: e.toString());
+      return AdbResult(
+        success: false,
+        error: _friendlyException(e, 'Failed to start server'),
+      );
     }
   }
 
@@ -234,7 +319,10 @@ class AdbService {
   /// Substitutes `%DEVICE%` with [deviceSerial] and replaces a leading `adb`
   /// token with the configured [adbPath], then executes via the platform shell
   /// so that pipes and redirects work.
-  Future<AdbResult> runShortcutCommand(String commandTemplate, String deviceSerial) async {
+  Future<AdbResult> runShortcutCommand(
+    String commandTemplate,
+    String deviceSerial,
+  ) async {
     try {
       var cmd = commandTemplate.replaceAll('%DEVICE%', deviceSerial);
 
@@ -251,14 +339,24 @@ class AdbService {
       final result = await _runner.run(shellArgs);
       final stdout = result.stdout?.toString().trim() ?? '';
       final stderr = result.stderr?.toString().trim() ?? '';
+      final output = [stdout, stderr].where((s) => s.isNotEmpty).join('\n');
+      final friendlyError = result.exitCode == 0
+          ? null
+          : AdbOutputParser.friendlyError(
+              output,
+              fallback: stderr.isNotEmpty ? stderr : 'Command failed',
+            );
 
       return AdbResult(
         success: result.exitCode == 0,
         message: stdout.isNotEmpty ? stdout : null,
-        error: stderr.isNotEmpty ? stderr : null,
+        error: friendlyError ?? (stderr.isNotEmpty ? stderr : null),
       );
     } catch (e) {
-      return AdbResult(success: false, error: e.toString());
+      return AdbResult(
+        success: false,
+        error: _friendlyException(e, 'Command failed'),
+      );
     }
   }
 

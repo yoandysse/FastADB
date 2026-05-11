@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/tools_config.dart';
+import '../../shared/utils/adb_output_parser.dart';
 import 'process_runner.dart';
 
 class ToolVerifyResult {
@@ -23,6 +24,26 @@ class ToolsConfigService {
 
   ToolsConfigService({ProcessRunner? processRunner})
     : _processRunner = processRunner ?? DefaultProcessRunner();
+
+  String _toolDisplayName(String path, String fallback) {
+    if (path.trim().isEmpty) return fallback;
+    return path.split(RegExp(r'[\\/]')).last;
+  }
+
+  String _friendlyVerifyError(Object error, String path, String fallback) {
+    if (error is ProcessException) {
+      return AdbOutputParser.friendlyError(
+            '${error.message}\n${error.executable}',
+            fallback: fallback,
+          ) ??
+          fallback;
+    }
+    return AdbOutputParser.friendlyError(
+          error.toString(),
+          fallback: fallback,
+        ) ??
+        fallback;
+  }
 
   Future<void> _init() async {
     _prefs = await SharedPreferences.getInstance();
@@ -195,15 +216,23 @@ class ToolsConfigService {
   Future<ToolVerifyResult> verifyAdb(String path) async {
     try {
       if (!File(path).existsSync()) {
-        return ToolVerifyResult(success: false, error: 'File not found: $path');
+        return ToolVerifyResult(
+          success: false,
+          error:
+              'ADB executable was not found at "$path". Install Android platform-tools or choose the correct adb path.',
+        );
       }
 
       final result = await _processRunner.run([path, 'version']);
 
       if (result.exitCode != 0) {
+        final output = '${result.stdout ?? ''}\n${result.stderr ?? ''}';
         return ToolVerifyResult(
           success: false,
-          error: result.stderr?.toString() ?? 'Unknown error',
+          error: AdbOutputParser.friendlyError(
+            output,
+            fallback: 'ADB verification failed',
+          ),
         );
       }
 
@@ -212,22 +241,34 @@ class ToolsConfigService {
 
       return ToolVerifyResult(success: true, version: versionLine);
     } catch (e) {
-      return ToolVerifyResult(success: false, error: e.toString());
+      return ToolVerifyResult(
+        success: false,
+        error: _friendlyVerifyError(e, path, 'ADB verification failed'),
+      );
     }
   }
 
   Future<ToolVerifyResult> verifyScrcpy(String path) async {
     try {
       if (!File(path).existsSync()) {
-        return ToolVerifyResult(success: false, error: 'File not found: $path');
+        return ToolVerifyResult(
+          success: false,
+          error:
+              'scrcpy executable was not found at "$path". Install scrcpy or choose the correct scrcpy path.',
+        );
       }
 
       final result = await _processRunner.run([path, '--version']);
 
       if (result.exitCode != 0) {
+        final output = '${result.stdout ?? ''}\n${result.stderr ?? ''}';
         return ToolVerifyResult(
           success: false,
-          error: result.stderr?.toString() ?? 'Unknown error',
+          error: AdbOutputParser.friendlyError(
+            output,
+            fallback:
+                '${_toolDisplayName(path, 'scrcpy')} --version exited with code ${result.exitCode}',
+          ),
         );
       }
 
@@ -236,7 +277,10 @@ class ToolsConfigService {
 
       return ToolVerifyResult(success: true, version: version);
     } catch (e) {
-      return ToolVerifyResult(success: false, error: e.toString());
+      return ToolVerifyResult(
+        success: false,
+        error: _friendlyVerifyError(e, path, 'scrcpy verification failed'),
+      );
     }
   }
 }

@@ -1,10 +1,7 @@
 {
   "mcpServers": {
-    "marionette": {
-      "command": "dart",
-      "args": ["run", "marionette_mcp"]
-    },
     "Sentry": {
       "url": "https://mcp.sentry.dev/mcp/sentry/flutter-fast-adb"
     }
   }
+}

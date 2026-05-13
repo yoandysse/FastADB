@@ -1,5 +1,20 @@
 # FastADB Release Notes
 
+## 0.1.0-beta.4
+
+Focus: observability for beta builds.
+
+- Added Sentry Flutter integration for desktop crash/error reporting.
+- Enabled Sentry debug symbol and source map upload configuration.
+- Added Sentry MCP project configuration for local development tools.
+- Ignored local `sentry.properties` credentials.
+
+Manual validation status:
+
+- macOS GitHub Release artifact: pending on physical macOS release machine.
+- Windows GitHub Release artifact: pending on physical/VM Windows release machine.
+- Linux GitHub Release artifact: pending on physical/VM Linux release machine.
+
 ## 0.1.0-beta.3
 
 Focus: MVP stabilization for ADB/scrcpy flows across macOS, Windows and Linux.

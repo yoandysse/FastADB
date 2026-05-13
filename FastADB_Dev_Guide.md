@@ -1,6 +1,6 @@
 # FastADB - Guia Tecnica
 
-Version de la guia: `0.1.0-beta.3`
+Version de la guia: `0.1.0-beta.4`
 
 FastADB es una aplicacion Flutter desktop para gestionar conexiones Android Debug Bridge sin depender de la terminal. La app no incluye binarios de ADB ni scrcpy; el usuario configura rutas a herramientas instaladas en su sistema.
 
@@ -301,7 +301,7 @@ Pendiente:
 Version actual:
 
 ```yaml
-version: 0.1.0-beta.3+3
+version: 0.1.0-beta.4+4
 ```
 
 Tags:
@@ -310,6 +310,7 @@ Tags:
 v0.1.0-beta.1
 v0.1.0-beta.2
 v0.1.0-beta.3
+v0.1.0-beta.4
 v0.2.0-beta.1
 v1.0.0
 ```
@@ -317,7 +318,7 @@ v1.0.0
 Crear release:
 
 ```bash
-git tag v0.1.0-beta.3
+git tag v0.1.0-beta.4
 git push origin main --tags
 ```
 

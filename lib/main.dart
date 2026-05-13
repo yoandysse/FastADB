@@ -5,6 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:marionette_flutter/marionette_flutter.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
+
+import 'config/app_info.dart';
 import 'core/models/device.dart';
 import 'core/models/shortcut.dart';
 import 'core/models/tools_config.dart';
@@ -15,10 +18,10 @@ import 'providers/locale_provider.dart';
 import 'providers/tools_config_provider.dart';
 import 'l10n/app_localizations.dart';
 
-void main() {
+Future<void> main() async {
   PrintLogCollector? marionetteLogCollector;
 
-  runZonedGuarded(
+  await runZonedGuarded(
     () async {
       marionetteLogCollector = _ensureFlutterBinding();
       _configureDevelopmentLogging(marionetteLogCollector);
@@ -27,6 +30,7 @@ void main() {
     },
     (error, stackTrace) {
       marionetteLogCollector?.addLog('[zone:error] $error\n$stackTrace');
+      unawaited(Sentry.captureException(error, stackTrace: stackTrace));
     },
   );
 }
@@ -82,7 +86,25 @@ Future<void> _bootstrap() async {
   await Hive.openBox<Shortcut>('shortcuts');
   await Hive.openBox('tools_config');
 
-  runApp(const ProviderScope(child: FastADBApp()));
+  await SentryFlutter.init(
+    (options) {
+      options.dsn =
+          'https://53140b49631c22e040fe03023c423f9e@sentry.krakenstain.com/2';
+      options.release = '${AppInfo.name}@${AppInfo.version}';
+      // Adds request headers and IP for users, for more info visit:
+      // https://docs.sentry.io/platforms/dart/guides/flutter/data-management/data-collected/
+      options.sendDefaultPii = true;
+      options.enableLogs = true;
+      // Set tracesSampleRate to 1.0 to capture 100% of transactions for tracing.
+      // We recommend adjusting this value in production.
+      options.tracesSampleRate = 1.0;
+      // Configure Session Replay
+      options.replay.sessionSampleRate = 0.1;
+      options.replay.onErrorSampleRate = 1.0;
+    },
+    appRunner: () =>
+        runApp(SentryWidget(child: const ProviderScope(child: FastADBApp()))),
+  );
 }
 
 class FastADBApp extends ConsumerWidget {

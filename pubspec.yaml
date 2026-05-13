@@ -2,12 +2,13 @@ name: fastadb
 description: "Desktop app to manage ADB connections across Windows, macOS, and Linux."
 publish_to: 'none'
 
-version: 0.1.0-beta.3+3
+version: 0.1.0-beta.4+4
 
 environment:
   sdk: ^3.11.5
 
 dependencies:
+  sentry_flutter: ^9.20.0
   flutter:
     sdk: flutter
   flutter_localizations:
@@ -38,6 +39,7 @@ dependencies:
   marionette_flutter: ^0.5.0
 
 dev_dependencies:
+  sentry_dart_plugin: ^3.3.0
   flutter_test:
     sdk: flutter
 
@@ -91,3 +93,9 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+
+sentry:
+  upload_debug_symbols: true
+  upload_source_maps: true
+  project: flutter-fast-adb
+  org: sentry

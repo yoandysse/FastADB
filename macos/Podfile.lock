@@ -2,8 +2,15 @@ PODS:
   - file_picker (0.0.1):
     - FlutterMacOS
   - FlutterMacOS (1.0.0)
+  - package_info_plus (0.0.1):
+    - FlutterMacOS
   - screen_retriever_macos (0.0.1):
     - FlutterMacOS
+  - Sentry/HybridSDK (8.58.2)
+  - sentry_flutter (9.20.0):
+    - Flutter
+    - FlutterMacOS
+    - Sentry/HybridSDK (= 8.58.2)
   - shared_preferences_foundation (0.0.1):
     - Flutter
     - FlutterMacOS
@@ -15,18 +22,28 @@ PODS:
 DEPENDENCIES:
   - file_picker (from `Flutter/ephemeral/.symlinks/plugins/file_picker/macos`)
   - FlutterMacOS (from `Flutter/ephemeral`)
+  - package_info_plus (from `Flutter/ephemeral/.symlinks/plugins/package_info_plus/macos`)
   - screen_retriever_macos (from `Flutter/ephemeral/.symlinks/plugins/screen_retriever_macos/macos`)
+  - sentry_flutter (from `Flutter/ephemeral/.symlinks/plugins/sentry_flutter/macos`)
   - shared_preferences_foundation (from `Flutter/ephemeral/.symlinks/plugins/shared_preferences_foundation/darwin`)
   - system_tray (from `Flutter/ephemeral/.symlinks/plugins/system_tray/macos`)
   - window_manager (from `Flutter/ephemeral/.symlinks/plugins/window_manager/macos`)
+
+SPEC REPOS:
+  trunk:
+    - Sentry
 
 EXTERNAL SOURCES:
   file_picker:
     :path: Flutter/ephemeral/.symlinks/plugins/file_picker/macos
   FlutterMacOS:
     :path: Flutter/ephemeral
+  package_info_plus:
+    :path: Flutter/ephemeral/.symlinks/plugins/package_info_plus/macos
   screen_retriever_macos:
     :path: Flutter/ephemeral/.symlinks/plugins/screen_retriever_macos/macos
+  sentry_flutter:
+    :path: Flutter/ephemeral/.symlinks/plugins/sentry_flutter/macos
   shared_preferences_foundation:
     :path: Flutter/ephemeral/.symlinks/plugins/shared_preferences_foundation/darwin
   system_tray:
@@ -37,7 +54,10 @@ EXTERNAL SOURCES:
 SPEC CHECKSUMS:
   file_picker: e716a70a9fe5fd9e09ebc922d7541464289443af
   FlutterMacOS: d0db08ddef1a9af05a5ec4b724367152bb0500b1
+  package_info_plus: 12f1c5c2cfe8727ca46cbd0b26677728972d9a5b
   screen_retriever_macos: 776e0fa5d42c6163d2bf772d22478df4b302b161
+  Sentry: de29b881e83bd91cf99a927f82f1fd86bfb39db2
+  sentry_flutter: aafdf112550e9550972852e71f44994bd4239254
   shared_preferences_foundation: 5086985c1d43c5ba4d5e69a4e8083a389e2909e6
   system_tray: e53c972838c69589ff2e77d6d3abfd71332f9e5d
   window_manager: e25faf20d88283a0d46e7b1a759d07261ca27575

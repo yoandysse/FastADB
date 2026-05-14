@@ -1,8 +1,12 @@
 # FastADB - Desktop ADB Manager
 
+[![Build](https://github.com/yoandysse/FastADB/actions/workflows/build.yml/badge.svg)](https://github.com/yoandysse/FastADB/actions/workflows/build.yml)
+[![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
+[![Releases](https://img.shields.io/github/v/release/yoandysse/FastADB?include_prereleases)](https://github.com/yoandysse/FastADB/releases)
+
 A cross-platform Flutter desktop application to manage Android devices via ADB without the terminal.
 
-**Current Status:** MVP Beta (`0.1.0-beta.4`)
+**Current Status:** MVP Beta (`0.1.0-beta.5`)
 
 FastADB is currently distributed as a beta pre-release. Expect the core ADB workflows to work, but treat the app as an MVP while installation, packaging, and edge cases continue to stabilize.
 
@@ -10,11 +14,11 @@ FastADB is currently distributed as a beta pre-release. Expect the core ADB work
 
 Beta builds are published from GitHub Releases:
 
-- Open the repository **Releases** page.
+- Open the repository [Releases](https://github.com/yoandysse/FastADB/releases) page.
 - Download the artifact for your OS:
-  - `FastADB-v0.1.0-beta.4-macos.dmg`
-  - `FastADB-v0.1.0-beta.4-windows-x64.zip`
-  - `FastADB-v0.1.0-beta.4-linux-x64.tar.gz`
+  - `FastADB-v0.1.0-beta.5-macos.dmg`
+  - `FastADB-v0.1.0-beta.5-windows-x64.zip`
+  - `FastADB-v0.1.0-beta.5-linux-x64.tar.gz`
 
 The macOS download is a drag-to-Applications DMG. The current beta builds are not code-signed or notarized, so macOS and Windows may show a security warning the first time the app is opened.
 
@@ -211,6 +215,21 @@ lib/
 
 ## Development
 
+FastADB is open source and contributions are welcome. Start with:
+
+- [`CONTRIBUTING.md`](CONTRIBUTING.md) for setup, development workflow, PR expectations, and release rules.
+- [`ROADMAP.md`](ROADMAP.md) for planned work.
+- [Good first issues](https://github.com/yoandysse/FastADB/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22) when available.
+
+Before opening a pull request:
+
+```bash
+flutter pub get
+flutter gen-l10n
+flutter analyze
+flutter test
+```
+
 ## Release Process
 
 FastADB uses semantic versioning with beta pre-releases:
@@ -222,7 +241,7 @@ MAJOR.MINOR.PATCH-prerelease+build
 Current app version:
 
 ```yaml
-version: 0.1.0-beta.4+4
+version: 0.1.0-beta.5+5
 ```
 
 Release tag format:
@@ -232,6 +251,7 @@ v0.1.0-beta.1
 v0.1.0-beta.2
 v0.1.0-beta.3
 v0.1.0-beta.4
+v0.1.0-beta.5
 v0.1.1-beta.1
 v0.2.0-beta.1
 v1.0.0
@@ -251,7 +271,7 @@ After GitHub Actions publishes the artifacts, validate the downloaded builds wit
 Publish a beta release:
 
 ```bash
-git tag v0.1.0-beta.4
+git tag v0.1.0-beta.5
 git push origin main --tags
 ```
 
@@ -352,10 +372,17 @@ See [`ROADMAP.md`](ROADMAP.md) for the active release plan from beta to `1.0.0`.
 - **Implementation Plan**: `FastADB_Plan_Implementacion.docx` (detailed requirements)
 - **UI Design**: `desing.pen` (Pencil/Figma mockups)
 
+## Community
+
+- **Contributing**: [`CONTRIBUTING.md`](CONTRIBUTING.md)
+- **Code of Conduct**: [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md)
+- **Security Policy**: [`SECURITY.md`](SECURITY.md)
+- **Support**: [`SUPPORT.md`](SUPPORT.md)
+
 ## License
 
-MIT - See LICENSE file
+Apache-2.0 - See [`LICENSE`](LICENSE).
 
 ---
 
-**FastADB MVP Beta 0.1.0-beta.4** - Built with Flutter 3.x, Riverpod, Hive, go_router
+**FastADB MVP Beta 0.1.0-beta.5** - Built with Flutter 3.x, Riverpod, Hive, go_router

@@ -1,5 +1,17 @@
 # FastADB Release Notes
 
+## 0.1.0-beta.5
+
+Focus: detected device workflows and public beta polish.
+
+- Renamed the sidebar section from USB-only wording to detected devices.
+- Added quick actions directly to detected USB and WiFi/TCP devices.
+- Added direct scrcpy launch from detected device cards without requiring the device to be saved first.
+- Fixed false `List / Android Unknown` devices caused by parsing the ADB devices header as a real device.
+- Added macOS file picker entitlement for user-selected files.
+- Enabled full Session Replay sampling for beta verification with text and image masking.
+- Bumped the app version to `0.1.0-beta.5`.
+
 ## 0.1.0-beta.4
 
 Focus: observability for beta builds.

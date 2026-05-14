@@ -1,6 +1,6 @@
 # FastADB Roadmap
 
-Estado actual: `0.1.0-beta.4`
+Estado actual: `0.1.0-beta.5`
 
 FastADB ya cubre el flujo MVP principal: configurar ADB/scrcpy, guardar dispositivos, detectar USB, conectar por WiFi/TCP, ejecutar shortcuts basicos y distribuir builds beta desde GitHub Releases. Este roadmap separa lo que falta para pasar de beta a una version estable.
 
@@ -21,6 +21,7 @@ Objetivo: que los flujos existentes funcionen de forma predecible en macOS, Wind
 - [x] Agregar tests unitarios para `AdbOutputParser`, `AdbService`, `ToolsConfigService`, `DeviceRepository` y `ShortcutRepository`.
 - [x] Revisar edge cases de `adb connect`, dispositivos `unauthorized`, `offline` y permisos USB Linux.
 - [x] Mantener release notes por cada beta.
+- [ ] Exponer estado de actualizaciones dentro de la app usando GitHub Releases.
 
 ## Beta 0.2.x - scrcpy, shortcuts y terminal
 

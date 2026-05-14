@@ -1,0 +1,68 @@
+name: Bug report
+description: Report a reproducible FastADB problem.
+title: "[Bug]: "
+labels: ["bug", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a bug. Please redact device IDs, private paths, and tokens.
+  - type: input
+    id: version
+    attributes:
+      label: FastADB version
+      description: "Example: 0.1.0-beta.5"
+      placeholder: 0.1.0-beta.5
+    validations:
+      required: true
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      options:
+        - macOS
+        - Windows
+        - Linux
+    validations:
+      required: true
+  - type: input
+    id: os_version
+    attributes:
+      label: OS version
+      placeholder: macOS 15.5, Windows 11 24H2, Ubuntu 24.04
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open FastADB
+        2. Go to ...
+        3. Click ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: ADB/scrcpy details
+      description: Include versions and paths when relevant.
+      placeholder: |
+        adb version:
+        scrcpy version:
+        Device connection type: USB / WiFi
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs or screenshots
+      description: Paste logs, screenshots, or Sentry issue IDs. Redact private data.

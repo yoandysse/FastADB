@@ -21,6 +21,18 @@
   "actionEdit": "Editar",
   "actionVerify": "Verificar",
   "actionBrowse": "Explorar...",
+  "updateChecking": "Buscando actualizaciones...",
+  "updateUpToDate": "Tienes la última versión",
+  "updateAvailableShort": "Nueva {version}",
+  "@updateAvailableShort": {
+    "placeholders": {
+      "version": { "type": "String" }
+    }
+  },
+  "updateAction": "Actualizar",
+  "updateCheckAction": "Verificar actualización",
+  "updateCheckFailed": "No se pudo verificar actualizaciones",
+  "updateOpenFailed": "No se pudo abrir la actualización.",
 
   "shortcutsRunning": "Ejecutando...",
   "shortcutsCompleted": "Completado",

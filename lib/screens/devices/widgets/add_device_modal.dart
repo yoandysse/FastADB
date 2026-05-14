@@ -45,15 +45,22 @@ class _AddDeviceModalState extends State<AddDeviceModal> {
 
   void _save() {
     if (_aliasController.text.trim().isEmpty) return;
-    if (_type == ConnectionType.wifi && _ipController.text.trim().isEmpty) return;
+    if (_type == ConnectionType.wifi && _ipController.text.trim().isEmpty) {
+      return;
+    }
 
     final device = Device(
       id: widget.editDevice?.id ?? const Uuid().v4(),
       alias: _aliasController.text.trim(),
       host: _type == ConnectionType.wifi ? _ipController.text.trim() : null,
-      port: _type == ConnectionType.wifi ? int.tryParse(_portController.text) ?? 5555 : null,
+      port: _type == ConnectionType.wifi
+          ? int.tryParse(_portController.text) ?? 5555
+          : null,
+      serial: widget.editDevice?.serial,
       type: _type,
       autoReconnect: _autoReconnect,
+      shortcutIds: widget.editDevice?.shortcutIds ?? const [],
+      lastConnected: widget.editDevice?.lastConnected,
     );
 
     widget.onSave(device);
@@ -81,7 +88,9 @@ class _AddDeviceModalState extends State<AddDeviceModal> {
             mainAxisSize: MainAxisSize.min,
             children: [
               _ModalHeader(
-                title: widget.editDevice == null ? l.modalAddTitle : l.modalEditTitle,
+                title: widget.editDevice == null
+                    ? l.modalAddTitle
+                    : l.modalEditTitle,
                 subtitle: l.modalSubtitle,
                 onClose: () => Navigator.pop(context),
               ),
@@ -92,8 +101,14 @@ class _AddDeviceModalState extends State<AddDeviceModal> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(l.modalConnectionType,
-                          style: TextStyle(color: p.textSecondary, fontSize: 13, fontWeight: FontWeight.w500)),
+                      Text(
+                        l.modalConnectionType,
+                        style: TextStyle(
+                          color: p.textSecondary,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
                       const SizedBox(height: 10),
                       Row(
                         children: [
@@ -103,7 +118,8 @@ class _AddDeviceModalState extends State<AddDeviceModal> {
                               title: l.modalWifiTitle,
                               subtitle: l.modalWifiSubtitle,
                               selected: _type == ConnectionType.wifi,
-                              onTap: () => setState(() => _type = ConnectionType.wifi),
+                              onTap: () =>
+                                  setState(() => _type = ConnectionType.wifi),
                             ),
                           ),
                           const SizedBox(width: 10),
@@ -113,7 +129,8 @@ class _AddDeviceModalState extends State<AddDeviceModal> {
                               title: l.modalUsbTitle,
                               subtitle: l.modalUsbSubtitle,
                               selected: _type == ConnectionType.usb,
-                              onTap: () => setState(() => _type = ConnectionType.usb),
+                              onTap: () =>
+                                  setState(() => _type = ConnectionType.usb),
                             ),
                           ),
                         ],
@@ -123,7 +140,10 @@ class _AddDeviceModalState extends State<AddDeviceModal> {
 
                       _FieldLabel(label: l.modalAliasLabel),
                       const SizedBox(height: 8),
-                      _StyledField(controller: _aliasController, hint: l.modalAliasHint),
+                      _StyledField(
+                        controller: _aliasController,
+                        hint: l.modalAliasHint,
+                      ),
 
                       if (_type == ConnectionType.wifi) ...[
                         const SizedBox(height: 20),
@@ -133,11 +153,19 @@ class _AddDeviceModalState extends State<AddDeviceModal> {
                           children: [
                             Expanded(
                               flex: 3,
-                              child: _StyledField(controller: _ipController, hint: '192.168.1.100', keyboardType: TextInputType.number),
+                              child: _StyledField(
+                                controller: _ipController,
+                                hint: '192.168.1.100',
+                                keyboardType: TextInputType.number,
+                              ),
                             ),
                             const SizedBox(width: 10),
                             Expanded(
-                              child: _StyledField(controller: _portController, hint: '5555', keyboardType: TextInputType.number),
+                              child: _StyledField(
+                                controller: _portController,
+                                hint: '5555',
+                                keyboardType: TextInputType.number,
+                              ),
                             ),
                           ],
                         ),
@@ -146,7 +174,8 @@ class _AddDeviceModalState extends State<AddDeviceModal> {
                       const SizedBox(height: 20),
 
                       GestureDetector(
-                        onTap: () => setState(() => _autoReconnect = !_autoReconnect),
+                        onTap: () =>
+                            setState(() => _autoReconnect = !_autoReconnect),
                         child: Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
@@ -160,23 +189,44 @@ class _AddDeviceModalState extends State<AddDeviceModal> {
                                 width: 18,
                                 height: 18,
                                 decoration: BoxDecoration(
-                                  color: _autoReconnect ? p.primaryBlue : Colors.transparent,
+                                  color: _autoReconnect
+                                      ? p.primaryBlue
+                                      : Colors.transparent,
                                   borderRadius: BorderRadius.circular(4),
                                   border: Border.all(
-                                    color: _autoReconnect ? p.primaryBlue : p.borderColor,
+                                    color: _autoReconnect
+                                        ? p.primaryBlue
+                                        : p.borderColor,
                                     width: 1.5,
                                   ),
                                 ),
-                                child: _autoReconnect ? const Icon(Icons.check, size: 12, color: Colors.white) : null,
+                                child: _autoReconnect
+                                    ? const Icon(
+                                        Icons.check,
+                                        size: 12,
+                                        color: Colors.white,
+                                      )
+                                    : null,
                               ),
                               const SizedBox(width: 12),
                               Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(l.modalAutoReconnectTitle,
-                                      style: TextStyle(color: p.textPrimary, fontSize: 13, fontWeight: FontWeight.w500)),
-                                  Text(l.modalAutoReconnectSubtitle,
-                                      style: TextStyle(color: p.textSecondary, fontSize: 11)),
+                                  Text(
+                                    l.modalAutoReconnectTitle,
+                                    style: TextStyle(
+                                      color: p.textPrimary,
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                  Text(
+                                    l.modalAutoReconnectSubtitle,
+                                    style: TextStyle(
+                                      color: p.textSecondary,
+                                      fontSize: 11,
+                                    ),
+                                  ),
                                 ],
                               ),
                             ],
@@ -186,8 +236,14 @@ class _AddDeviceModalState extends State<AddDeviceModal> {
 
                       const SizedBox(height: 20),
 
-                      Text(l.modalShortcutsLabel,
-                          style: TextStyle(color: p.textSecondary, fontSize: 13, fontWeight: FontWeight.w500)),
+                      Text(
+                        l.modalShortcutsLabel,
+                        style: TextStyle(
+                          color: p.textSecondary,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
                       const SizedBox(height: 8),
                       Wrap(
                         spacing: 8,
@@ -202,7 +258,10 @@ class _AddDeviceModalState extends State<AddDeviceModal> {
                 ),
               ),
               Container(height: 1, color: p.divider),
-              _ModalFooter(onCancel: () => Navigator.pop(context), onSave: _save),
+              _ModalFooter(
+                onCancel: () => Navigator.pop(context),
+                onSave: _save,
+              ),
             ],
           ),
         ),
@@ -216,7 +275,11 @@ class _ModalHeader extends StatelessWidget {
   final String subtitle;
   final VoidCallback onClose;
 
-  const _ModalHeader({required this.title, required this.subtitle, required this.onClose});
+  const _ModalHeader({
+    required this.title,
+    required this.subtitle,
+    required this.onClose,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -230,9 +293,19 @@ class _ModalHeader extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: TextStyle(color: p.textPrimary, fontSize: 16, fontWeight: FontWeight.w700)),
+                Text(
+                  title,
+                  style: TextStyle(
+                    color: p.textPrimary,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
                 const SizedBox(height: 2),
-                Text(subtitle, style: TextStyle(color: p.textSecondary, fontSize: 12)),
+                Text(
+                  subtitle,
+                  style: TextStyle(color: p.textSecondary, fontSize: 12),
+                ),
               ],
             ),
           ),
@@ -241,7 +314,10 @@ class _ModalHeader extends StatelessWidget {
             child: Container(
               width: 28,
               height: 28,
-              decoration: BoxDecoration(color: p.surfaceHighlight, borderRadius: BorderRadius.circular(6)),
+              decoration: BoxDecoration(
+                color: p.surfaceHighlight,
+                borderRadius: BorderRadius.circular(6),
+              ),
               child: Icon(Icons.close, size: 16, color: p.textSecondary),
             ),
           ),
@@ -271,8 +347,18 @@ class _ModalFooter extends StatelessWidget {
             onTap: onCancel,
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 9),
-              decoration: BoxDecoration(color: p.surfaceHighlight, borderRadius: BorderRadius.circular(6)),
-              child: Text(l.actionCancel, style: TextStyle(color: p.textSecondary, fontSize: 13, fontWeight: FontWeight.w500)),
+              decoration: BoxDecoration(
+                color: p.surfaceHighlight,
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Text(
+                l.actionCancel,
+                style: TextStyle(
+                  color: p.textSecondary,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
             ),
           ),
           const SizedBox(width: 8),
@@ -280,12 +366,26 @@ class _ModalFooter extends StatelessWidget {
             onTap: onSave,
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 9),
-              decoration: BoxDecoration(color: p.primaryBlue, borderRadius: BorderRadius.circular(6)),
+              decoration: BoxDecoration(
+                color: p.primaryBlue,
+                borderRadius: BorderRadius.circular(6),
+              ),
               child: Row(
                 children: [
-                  const Icon(Icons.save_outlined, size: 14, color: Colors.white),
+                  const Icon(
+                    Icons.save_outlined,
+                    size: 14,
+                    color: Colors.white,
+                  ),
                   const SizedBox(width: 6),
-                  Text(l.modalSaveDevice, style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600)),
+                  Text(
+                    l.modalSaveDevice,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -303,7 +403,13 @@ class _TypeOption extends StatelessWidget {
   final bool selected;
   final VoidCallback onTap;
 
-  const _TypeOption({required this.icon, required this.title, required this.subtitle, required this.selected, required this.onTap});
+  const _TypeOption({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.selected,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -315,18 +421,35 @@ class _TypeOption extends StatelessWidget {
         decoration: BoxDecoration(
           color: selected ? p.primaryBlue.withValues(alpha: 0.1) : p.surface,
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: selected ? p.primaryBlue : p.borderColor, width: selected ? 1.5 : 1),
+          border: Border.all(
+            color: selected ? p.primaryBlue : p.borderColor,
+            width: selected ? 1.5 : 1,
+          ),
         ),
         child: Row(
           children: [
-            Icon(icon, size: 18, color: selected ? p.primaryBlue : p.textSecondary),
+            Icon(
+              icon,
+              size: 18,
+              color: selected ? p.primaryBlue : p.textSecondary,
+            ),
             const SizedBox(width: 10),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title, style: TextStyle(color: selected ? p.textPrimary : p.textSecondary, fontSize: 13, fontWeight: FontWeight.w600)),
-                  Text(subtitle, style: TextStyle(color: p.textSecondary, fontSize: 11)),
+                  Text(
+                    title,
+                    style: TextStyle(
+                      color: selected ? p.textPrimary : p.textSecondary,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  Text(
+                    subtitle,
+                    style: TextStyle(color: p.textSecondary, fontSize: 11),
+                  ),
                 ],
               ),
             ),
@@ -344,7 +467,14 @@ class _FieldLabel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = AppPalette.of(context);
-    return Text(label, style: TextStyle(color: p.textSecondary, fontSize: 13, fontWeight: FontWeight.w500));
+    return Text(
+      label,
+      style: TextStyle(
+        color: p.textSecondary,
+        fontSize: 13,
+        fontWeight: FontWeight.w500,
+      ),
+    );
   }
 }
 
@@ -353,7 +483,11 @@ class _StyledField extends StatelessWidget {
   final String hint;
   final TextInputType? keyboardType;
 
-  const _StyledField({required this.controller, required this.hint, this.keyboardType});
+  const _StyledField({
+    required this.controller,
+    required this.hint,
+    this.keyboardType,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -367,10 +501,22 @@ class _StyledField extends StatelessWidget {
         hintStyle: TextStyle(color: p.textDisabled, fontSize: 13),
         filled: true,
         fillColor: p.surface,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: p.borderColor)),
-        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: p.borderColor)),
-        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: p.primaryBlue, width: 1.5)),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 12,
+          vertical: 10,
+        ),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: BorderSide(color: p.borderColor),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: BorderSide(color: p.borderColor),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: BorderSide(color: p.primaryBlue, width: 1.5),
+        ),
         isDense: true,
       ),
     );
@@ -391,9 +537,18 @@ class _ShortcutTag extends StatelessWidget {
       decoration: BoxDecoration(
         color: selected ? p.accent.withValues(alpha: 0.12) : p.surfaceHighlight,
         borderRadius: BorderRadius.circular(5),
-        border: Border.all(color: selected ? p.accent.withValues(alpha: 0.4) : p.borderColor),
+        border: Border.all(
+          color: selected ? p.accent.withValues(alpha: 0.4) : p.borderColor,
+        ),
       ),
-      child: Text(label, style: TextStyle(fontSize: 12, color: selected ? p.accent : p.textSecondary, fontWeight: FontWeight.w500)),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 12,
+          color: selected ? p.accent : p.textSecondary,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
     );
   }
 }

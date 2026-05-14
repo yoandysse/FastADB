@@ -73,6 +73,21 @@ class DevicesScreen extends ConsumerWidget {
       ),
     );
   }
+
+  static void showEditModal(
+    BuildContext context,
+    WidgetRef ref,
+    Device device,
+  ) {
+    showDialog(
+      context: context,
+      builder: (_) => AddDeviceModal(
+        editDevice: device,
+        onSave: (updatedDevice) =>
+            ref.read(devicesProvider.notifier).updateDevice(updatedDevice),
+      ),
+    );
+  }
 }
 
 class _TopBar extends StatelessWidget {
@@ -205,6 +220,8 @@ class _DeviceListState extends ConsumerState<_DeviceList> {
                 onSelect: () => _toggleSelection(s.device.id),
                 onConnect: () => _connect(context, s.device),
                 onDisconnect: () => widget.notifier.disconnect(s.device),
+                onEdit: () =>
+                    DevicesScreen.showEditModal(context, ref, s.device),
                 onDelete: () =>
                     _confirmDelete(context, s.device, widget.notifier),
                 onScrcpy: hasScrcpy
@@ -224,6 +241,8 @@ class _DeviceListState extends ConsumerState<_DeviceList> {
                 onSelect: () => _toggleSelection(s.device.id),
                 onConnect: () => _connect(context, s.device),
                 onDisconnect: () => widget.notifier.disconnect(s.device),
+                onEdit: () =>
+                    DevicesScreen.showEditModal(context, ref, s.device),
                 onDelete: () =>
                     _confirmDelete(context, s.device, widget.notifier),
                 onScrcpy: hasScrcpy
@@ -343,6 +362,7 @@ class _DeviceCard extends StatelessWidget {
   final VoidCallback onSelect;
   final VoidCallback onConnect;
   final VoidCallback onDisconnect;
+  final VoidCallback onEdit;
   final VoidCallback onDelete;
   final VoidCallback? onScrcpy;
 
@@ -352,6 +372,7 @@ class _DeviceCard extends StatelessWidget {
     required this.onSelect,
     required this.onConnect,
     required this.onDisconnect,
+    required this.onEdit,
     required this.onDelete,
     this.onScrcpy,
   });
@@ -494,23 +515,18 @@ class _DeviceCard extends StatelessWidget {
                       onTap: onConnect,
                     ),
                   const SizedBox(width: 8),
-                  GestureDetector(
+                  _IconActionButton(
+                    tooltip: l.actionEdit,
+                    icon: Icons.edit_outlined,
+                    color: p.textSecondary,
+                    onTap: onEdit,
+                  ),
+                  const SizedBox(width: 8),
+                  _IconActionButton(
+                    tooltip: l.actionDelete,
+                    icon: Icons.delete_outline,
+                    color: p.statusError,
                     onTap: onDelete,
-                    child: Tooltip(
-                      message: l.actionDelete,
-                      child: Container(
-                        padding: const EdgeInsets.all(6),
-                        decoration: BoxDecoration(
-                          color: p.statusError.withValues(alpha: 0.08),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Icon(
-                          Icons.delete_outline,
-                          size: 16,
-                          color: p.statusError,
-                        ),
-                      ),
-                    ),
                   ),
                 ],
               ),
@@ -526,6 +542,39 @@ class _DeviceCard extends StatelessWidget {
     if (diff.inDays > 0) return '${diff.inDays}d';
     if (diff.inHours > 0) return '${diff.inHours}h';
     return '${diff.inMinutes}min';
+  }
+}
+
+class _IconActionButton extends StatelessWidget {
+  final String tooltip;
+  final IconData icon;
+  final Color color;
+  final VoidCallback onTap;
+
+  const _IconActionButton({
+    required this.tooltip,
+    required this.icon,
+    required this.color,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: tooltip,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(6),
+        child: Container(
+          padding: const EdgeInsets.all(6),
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(6),
+          ),
+          child: Icon(icon, size: 16, color: color),
+        ),
+      ),
+    );
   }
 }
 

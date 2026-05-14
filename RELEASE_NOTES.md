@@ -1,5 +1,18 @@
 # FastADB Release Notes
 
+## 0.1.0-beta.6
+
+Focus: update checks and saved device/settings polish.
+
+- Added GitHub Releases update checking on app startup.
+- Added update status and update action in the sidebar version area.
+- Added a manual "Check update" control in Settings near the app information.
+- Added editing for saved devices, including alias, connection details, and auto-reconnect.
+- Persisted successful ADB and scrcpy verification status across Settings screen reloads.
+- Invalidates saved verification status when the configured tool path changes.
+- Added tests for update version comparison and persisted tool verification.
+- Bumped the app version to `0.1.0-beta.6`.
+
 ## 0.1.0-beta.5
 
 Focus: detected device workflows and public beta polish.

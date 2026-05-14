@@ -18,6 +18,10 @@ class ToolsConfigService {
   static const String _autoReconnectKey = 'auto_reconnect_on_start';
   static const String _startMinimizedKey = 'start_minimized';
   static const String _themeKey = 'theme';
+  static const String _verifiedAdbPathKey = 'verified_adb_path';
+  static const String _verifiedAdbVersionKey = 'verified_adb_version';
+  static const String _verifiedScrcpyPathKey = 'verified_scrcpy_path';
+  static const String _verifiedScrcpyVersionKey = 'verified_scrcpy_version';
 
   final ProcessRunner _processRunner;
   late SharedPreferences _prefs;
@@ -57,6 +61,10 @@ class ToolsConfigService {
     final autoReconnect = _prefs.getBool(_autoReconnectKey) ?? true;
     final startMinimized = _prefs.getBool(_startMinimizedKey) ?? false;
     final theme = _prefs.getString(_themeKey) ?? 'system';
+    final verifiedAdbPath = _prefs.getString(_verifiedAdbPathKey);
+    final verifiedAdbVersion = _prefs.getString(_verifiedAdbVersionKey);
+    final verifiedScrcpyPath = _prefs.getString(_verifiedScrcpyPathKey);
+    final verifiedScrcpyVersion = _prefs.getString(_verifiedScrcpyVersionKey);
 
     return ToolsConfig(
       adbPath: adbPath,
@@ -64,6 +72,10 @@ class ToolsConfigService {
       autoReconnectOnStart: autoReconnect,
       startMinimized: startMinimized,
       theme: theme,
+      verifiedAdbPath: verifiedAdbPath,
+      verifiedAdbVersion: verifiedAdbVersion,
+      verifiedScrcpyPath: verifiedScrcpyPath,
+      verifiedScrcpyVersion: verifiedScrcpyVersion,
     );
   }
 
@@ -76,7 +88,19 @@ class ToolsConfigService {
       _prefs.setBool(_autoReconnectKey, config.autoReconnectOnStart),
       _prefs.setBool(_startMinimizedKey, config.startMinimized),
       _prefs.setString(_themeKey, config.theme),
+      _setOptionalString(_verifiedAdbPathKey, config.verifiedAdbPath),
+      _setOptionalString(_verifiedAdbVersionKey, config.verifiedAdbVersion),
+      _setOptionalString(_verifiedScrcpyPathKey, config.verifiedScrcpyPath),
+      _setOptionalString(
+        _verifiedScrcpyVersionKey,
+        config.verifiedScrcpyVersion,
+      ),
     ]);
+  }
+
+  Future<bool> _setOptionalString(String key, String? value) {
+    if (value == null || value.isEmpty) return _prefs.remove(key);
+    return _prefs.setString(key, value);
   }
 
   Future<String?> autoDetectAdb() async {

@@ -1,6 +1,6 @@
 # FastADB Roadmap
 
-Estado actual: `0.1.0-beta.5`
+Estado actual: `0.1.0-beta.6`
 
 FastADB ya cubre el flujo MVP principal: configurar ADB/scrcpy, guardar dispositivos, detectar USB, conectar por WiFi/TCP, ejecutar shortcuts basicos y distribuir builds beta desde GitHub Releases. Este roadmap separa lo que falta para pasar de beta a una version estable.
 

@@ -22,13 +22,17 @@ class ToolsConfigAdapter extends TypeAdapter<ToolsConfig> {
       autoReconnectOnStart: fields[2] as bool,
       startMinimized: fields[3] as bool,
       theme: fields[4] as String,
+      verifiedAdbPath: fields[5] as String?,
+      verifiedAdbVersion: fields[6] as String?,
+      verifiedScrcpyPath: fields[7] as String?,
+      verifiedScrcpyVersion: fields[8] as String?,
     );
   }
 
   @override
   void write(BinaryWriter writer, ToolsConfig obj) {
     writer
-      ..writeByte(5)
+      ..writeByte(9)
       ..writeByte(0)
       ..write(obj.adbPath)
       ..writeByte(1)
@@ -38,7 +42,15 @@ class ToolsConfigAdapter extends TypeAdapter<ToolsConfig> {
       ..writeByte(3)
       ..write(obj.startMinimized)
       ..writeByte(4)
-      ..write(obj.theme);
+      ..write(obj.theme)
+      ..writeByte(5)
+      ..write(obj.verifiedAdbPath)
+      ..writeByte(6)
+      ..write(obj.verifiedAdbVersion)
+      ..writeByte(7)
+      ..write(obj.verifiedScrcpyPath)
+      ..writeByte(8)
+      ..write(obj.verifiedScrcpyVersion);
   }
 
   @override

@@ -206,6 +206,48 @@ abstract class AppLocalizations {
   /// **'Browse...'**
   String get actionBrowse;
 
+  /// No description provided for @updateChecking.
+  ///
+  /// In en, this message translates to:
+  /// **'Checking for updates...'**
+  String get updateChecking;
+
+  /// No description provided for @updateUpToDate.
+  ///
+  /// In en, this message translates to:
+  /// **'You are on the latest version'**
+  String get updateUpToDate;
+
+  /// No description provided for @updateAvailableShort.
+  ///
+  /// In en, this message translates to:
+  /// **'New {version}'**
+  String updateAvailableShort(String version);
+
+  /// No description provided for @updateAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Update'**
+  String get updateAction;
+
+  /// No description provided for @updateCheckAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Check update'**
+  String get updateCheckAction;
+
+  /// No description provided for @updateCheckFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not check for updates'**
+  String get updateCheckFailed;
+
+  /// No description provided for @updateOpenFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not open the update.'**
+  String get updateOpenFailed;
+
   /// No description provided for @shortcutsRunning.
   ///
   /// In en, this message translates to:

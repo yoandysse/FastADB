@@ -33,6 +33,10 @@ void main() {
           autoReconnectOnStart: false,
           startMinimized: true,
           theme: 'dark',
+          verifiedAdbPath: '/tmp/adb',
+          verifiedAdbVersion: 'Android Debug Bridge version 1.0.41',
+          verifiedScrcpyPath: '/tmp/scrcpy',
+          verifiedScrcpyVersion: 'scrcpy 3.3.3',
         ),
       );
 
@@ -42,6 +46,25 @@ void main() {
       expect(loaded.autoReconnectOnStart, isFalse);
       expect(loaded.startMinimized, isTrue);
       expect(loaded.theme, 'dark');
+      expect(
+        loaded.adbVerification?.version,
+        'Android Debug Bridge version 1.0.41',
+      );
+      expect(loaded.scrcpyVerification?.version, 'scrcpy 3.3.3');
+    });
+
+    test('verification is ignored when the path changes', () async {
+      final config = ToolsConfig(
+        adbPath: '/tmp/adb-new',
+        scrcpyPath: '/tmp/scrcpy',
+        verifiedAdbPath: '/tmp/adb-old',
+        verifiedAdbVersion: 'Android Debug Bridge version 1.0.41',
+        verifiedScrcpyPath: '/tmp/scrcpy',
+        verifiedScrcpyVersion: 'scrcpy 3.3.3',
+      );
+
+      expect(config.adbVerification, isNull);
+      expect(config.scrcpyVerification?.version, 'scrcpy 3.3.3');
     });
 
     test('verifyAdb returns parsed version for existing path', () async {

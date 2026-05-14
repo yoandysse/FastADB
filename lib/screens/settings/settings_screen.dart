@@ -5,6 +5,7 @@ import '../../shared/widgets/app_shell.dart';
 import '../../shared/theme/app_colors.dart';
 import '../../providers/tools_config_provider.dart';
 import '../../providers/locale_provider.dart';
+import '../../providers/update_provider.dart';
 import '../../core/models/tools_config.dart';
 import '../../core/services/tools_config_service.dart';
 import '../../config/app_info.dart';
@@ -74,7 +75,7 @@ class _TopBar extends StatelessWidget {
   }
 }
 
-class _SettingsBody extends StatelessWidget {
+class _SettingsBody extends ConsumerWidget {
   final ToolsConfig config;
   final ToolsConfigNotifier notifier;
   final Locale? locale;
@@ -88,9 +89,10 @@ class _SettingsBody extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l = AppLocalizations.of(context)!;
     final p = AppPalette.of(context);
+    final updateState = ref.watch(updateProvider);
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(32, 28, 32, 28),
       child: Column(
@@ -107,26 +109,50 @@ class _SettingsBody extends StatelessWidget {
             name: l.settingsAdbName,
             subtitle: l.settingsAdbSubtitle,
             path: config.adbPath,
+            verifiedVersion: config.adbVerification?.version,
             onAutoDetect: () => notifier.autoDetectAdb(),
             onVerify: (path) async {
               final svc = await notifier.getService();
-              return svc.verifyAdb(path);
+              final result = await svc.verifyAdb(path);
+              if (result.success && result.version != null) {
+                await notifier.saveConfig(
+                  config.copyWith(
+                    adbPath: path,
+                    verifiedAdbPath: path,
+                    verifiedAdbVersion: result.version,
+                  ),
+                );
+              }
+              return result;
             },
-            onPathChanged: (p) =>
-                notifier.saveConfig(config.copyWith(adbPath: p)),
+            onPathChanged: (p) => notifier.saveConfig(
+              config.copyWith(adbPath: p, clearAdbVerification: true),
+            ),
           ),
           const SizedBox(height: 16),
           _ToolRow(
             name: l.settingsScrcpyName,
             subtitle: l.settingsScrcpySubtitle,
             path: config.scrcpyPath,
+            verifiedVersion: config.scrcpyVerification?.version,
             onAutoDetect: () => notifier.autoDetectScrcpy(),
             onVerify: (path) async {
               final svc = await notifier.getService();
-              return svc.verifyScrcpy(path);
+              final result = await svc.verifyScrcpy(path);
+              if (result.success && result.version != null) {
+                await notifier.saveConfig(
+                  config.copyWith(
+                    scrcpyPath: path,
+                    verifiedScrcpyPath: path,
+                    verifiedScrcpyVersion: result.version,
+                  ),
+                );
+              }
+              return result;
             },
-            onPathChanged: (p) =>
-                notifier.saveConfig(config.copyWith(scrcpyPath: p)),
+            onPathChanged: (p) => notifier.saveConfig(
+              config.copyWith(scrcpyPath: p, clearScrcpyVerification: true),
+            ),
           ),
           const SizedBox(height: 8),
           Row(
@@ -264,7 +290,170 @@ class _SettingsBody extends StatelessWidget {
             l.aboutDescription,
             style: TextStyle(color: p.textDisabled, fontSize: 11),
           ),
+          const SizedBox(height: 16),
+          _UpdateSettingsRow(
+            state: updateState,
+            onCheck: () => ref.read(updateProvider.notifier).check(),
+            onUpdate: () async {
+              final opened = await ref
+                  .read(updateProvider.notifier)
+                  .openUpdate();
+              if (!context.mounted || opened) return;
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(SnackBar(content: Text(l.updateOpenFailed)));
+            },
+          ),
         ],
+      ),
+    );
+  }
+}
+
+class _UpdateSettingsRow extends StatelessWidget {
+  final UpdateState state;
+  final VoidCallback onCheck;
+  final VoidCallback onUpdate;
+
+  const _UpdateSettingsRow({
+    required this.state,
+    required this.onCheck,
+    required this.onUpdate,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
+    final p = AppPalette.of(context);
+    final update = state.update;
+
+    final status = update != null
+        ? l.updateAvailableShort('v${update.version}')
+        : state.error != null
+        ? l.updateCheckFailed
+        : l.updateUpToDate;
+    final statusColor = update != null
+        ? p.accent
+        : state.error != null
+        ? p.statusError
+        : p.textSecondary;
+
+    return Container(
+      constraints: const BoxConstraints(maxWidth: 520),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: p.surface,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: p.borderColor),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.system_update_alt, size: 16, color: statusColor),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              status,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: statusColor,
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+          if (update != null) ...[
+            _SettingsUpdateButton(
+              label: l.updateAction,
+              icon: Icons.download_outlined,
+              onTap: onUpdate,
+              primary: true,
+            ),
+            const SizedBox(width: 8),
+          ],
+          _SettingsUpdateButton(
+            label: l.updateCheckAction,
+            icon: Icons.refresh,
+            onTap: state.checking ? null : onCheck,
+            loading: state.checking,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SettingsUpdateButton extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final VoidCallback? onTap;
+  final bool loading;
+  final bool primary;
+
+  const _SettingsUpdateButton({
+    required this.label,
+    required this.icon,
+    required this.onTap,
+    this.loading = false,
+    this.primary = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final p = AppPalette.of(context);
+    final color = primary ? p.accent : p.primaryBlue;
+
+    return Tooltip(
+      message: label,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(6),
+        child: Container(
+          height: 30,
+          padding: const EdgeInsets.symmetric(horizontal: 10),
+          decoration: BoxDecoration(
+            color: onTap == null
+                ? p.surfaceHighlight
+                : color.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(6),
+            border: Border.all(
+              color: onTap == null
+                  ? p.borderColor
+                  : color.withValues(alpha: 0.42),
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (loading)
+                SizedBox(
+                  width: 13,
+                  height: 13,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 1.5,
+                    color: p.textDisabled,
+                  ),
+                )
+              else
+                Icon(
+                  icon,
+                  size: 14,
+                  color: onTap == null ? p.textDisabled : color,
+                ),
+              const SizedBox(width: 6),
+              Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: onTap == null ? p.textDisabled : color,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -293,6 +482,7 @@ class _ToolRow extends StatefulWidget {
   final String name;
   final String subtitle;
   final String path;
+  final String? verifiedVersion;
   final Future<String?> Function() onAutoDetect;
   final Future<ToolVerifyResult> Function(String) onVerify;
   final Function(String) onPathChanged;
@@ -301,6 +491,7 @@ class _ToolRow extends StatefulWidget {
     required this.name,
     required this.subtitle,
     required this.path,
+    required this.verifiedVersion,
     required this.onAutoDetect,
     required this.onVerify,
     required this.onPathChanged,
@@ -321,6 +512,10 @@ class _ToolRowState extends State<_ToolRow> {
   void initState() {
     super.initState();
     _controller = TextEditingController(text: widget.path);
+    final verifiedVersion = widget.verifiedVersion;
+    if (verifiedVersion != null) {
+      _result = ToolVerifyResult(success: true, version: verifiedVersion);
+    }
   }
 
   @override

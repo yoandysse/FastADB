@@ -63,6 +63,29 @@ class AppLocalizationsEs extends AppLocalizations {
   String get actionBrowse => 'Explorar...';
 
   @override
+  String get updateChecking => 'Buscando actualizaciones...';
+
+  @override
+  String get updateUpToDate => 'Tienes la última versión';
+
+  @override
+  String updateAvailableShort(String version) {
+    return 'Nueva $version';
+  }
+
+  @override
+  String get updateAction => 'Actualizar';
+
+  @override
+  String get updateCheckAction => 'Verificar actualización';
+
+  @override
+  String get updateCheckFailed => 'No se pudo verificar actualizaciones';
+
+  @override
+  String get updateOpenFailed => 'No se pudo abrir la actualización.';
+
+  @override
   String get shortcutsRunning => 'Ejecutando...';
 
   @override

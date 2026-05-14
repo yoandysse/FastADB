@@ -5,7 +5,7 @@ void main() {
   group('AdbOutputParser', () {
     test('parses adb devices output with tabs and spaces', () {
       const output = '''
-List of attached devices
+List of devices attached
 emulator-5554	device
 R58M123456 unauthorized
 192.168.1.20:5555	offline
@@ -15,6 +15,17 @@ R58M123456 unauthorized
         ('emulator-5554', 'device'),
         ('R58M123456', 'unauthorized'),
         ('192.168.1.20:5555', 'offline'),
+      ]);
+    });
+
+    test('ignores legacy adb devices header wording', () {
+      const output = '''
+List of attached devices
+emulator-5554	device
+''';
+
+      expect(AdbOutputParser.parseDevices(output), [
+        ('emulator-5554', 'device'),
       ]);
     });
 

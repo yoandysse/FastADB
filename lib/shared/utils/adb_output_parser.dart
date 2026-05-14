@@ -22,7 +22,7 @@ class AdbOutputParser {
       final trimmed = line.trim();
 
       if (trimmed.isEmpty ||
-          trimmed == 'List of attached devices' ||
+          _isDevicesHeader(trimmed) ||
           trimmed.contains('adb server version')) {
         continue;
       }
@@ -39,6 +39,12 @@ class AdbOutputParser {
     }
 
     return devices;
+  }
+
+  static bool _isDevicesHeader(String line) {
+    final normalized = line.toLowerCase();
+    return normalized == 'list of devices attached' ||
+        normalized == 'list of attached devices';
   }
 
   /// Check if a device state is valid (connected)

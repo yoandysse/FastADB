@@ -2,7 +2,7 @@ name: fastadb
 description: "Desktop app to manage ADB connections across Windows, macOS, and Linux."
 publish_to: 'none'
 
-version: 0.1.0-beta.4+4
+version: 0.1.0-beta.5+5
 
 environment:
   sdk: ^3.11.5

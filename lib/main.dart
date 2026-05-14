@@ -98,9 +98,11 @@ Future<void> _bootstrap() async {
       // Set tracesSampleRate to 1.0 to capture 100% of transactions for tracing.
       // We recommend adjusting this value in production.
       options.tracesSampleRate = 1.0;
-      // Configure Session Replay
-      options.replay.sessionSampleRate = 0.1;
+      // Configure Session Replay for beta verification.
+      options.replay.sessionSampleRate = 1.0;
       options.replay.onErrorSampleRate = 1.0;
+      options.privacy.maskAllText = true;
+      options.privacy.maskAllImages = true;
     },
     appRunner: () =>
         runApp(SentryWidget(child: const ProviderScope(child: FastADBApp()))),

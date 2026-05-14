@@ -107,7 +107,7 @@ abstract class AppLocalizations {
   /// No description provided for @navUsb.
   ///
   /// In en, this message translates to:
-  /// **'USB Detected'**
+  /// **'Detected Devices'**
   String get navUsb;
 
   /// No description provided for @navShortcuts.

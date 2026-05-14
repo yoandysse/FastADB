@@ -12,7 +12,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get navDevices => 'Mis Dispositivos';
 
   @override
-  String get navUsb => 'USB Detectados';
+  String get navUsb => 'Dispositivos Detectados';
 
   @override
   String get navShortcuts => 'Accesos Rápidos';

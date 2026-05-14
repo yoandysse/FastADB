@@ -321,9 +321,6 @@ class _ToolRowState extends State<_ToolRow> {
   void initState() {
     super.initState();
     _controller = TextEditingController(text: widget.path);
-    if (widget.path.isNotEmpty) {
-      WidgetsBinding.instance.addPostFrameCallback((_) => _verify());
-    }
   }
 
   @override
@@ -496,6 +493,7 @@ class _ToolRowState extends State<_ToolRow> {
     setState(() => _verifying = true);
     try {
       final result = await widget.onVerify(_controller.text);
+      if (!mounted) return;
       setState(() {
         _result = result;
         _verifying = false;
@@ -506,8 +504,8 @@ class _ToolRowState extends State<_ToolRow> {
     } catch (e) {
       if (mounted) {
         setState(() => _verifying = false);
+        _showMessage('Verification failed: $e');
       }
-      _showMessage('Verification failed: $e');
     }
   }
 
